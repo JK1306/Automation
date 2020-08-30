@@ -1,0 +1,20 @@
+version: "3"
+services:
+  controller:
+    image: gem_controller
+    container_name: bot
+    restart: always
+    working_dir: /app/main_api/SPI_Group
+    command: ["python3", "task_2.py"]
+  sql_db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: "spi_group_replica"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+    ports: 6603:3306
+    container_name: sql
+    volumes:
+      - my-db:/var/lib/mysql
