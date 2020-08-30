@@ -10,15 +10,15 @@ from selenium.webdriver.chrome.options import Options
 import shutil
 from datetime import datetime
 import time
-from zipfile import ZipFile
-from glob import glob
+# from zipfile import ZipFile
+# from glob import glob
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import pandas as pd
 from openpyxl import Workbook
 import openpyxl
-import glob
+# import glob
 import mysql.connector
 from mysql.connector import Error
 import json
@@ -308,26 +308,26 @@ def exception_case(browser):
                     email_element.click()
                     download_button_click(browser,company,True)
 
-def extract_file(browser,excel_dest_path):
-    # print("REACHED extract file")
-    file_name=set()
-    file_list = os.listdir(excel_dest_path)
-    ret_file_name=set()
-    for file in file_list:
-        # print(file)
-        if os.path.isdir(os.path.join(excel_dest_path,file)):
-            ret_file_name = extract_file(browser,os.path.join(excel_dest_path,file))
-        else:
-            if 'zip' in file:
-                zip_file_path = os.path.join(excel_dest_path,file)
-                with ZipFile(zip_file_path,"r") as zip_file:
-                    zip_file.extractall(excel_dest_path)
-                os.remove(zip_file_path)
-                ret_file_name=extract_file(browser,excel_dest_path)
-            else:
-                file_name.add(os.path.join(excel_dest_path,file))
-        file_name.update(ret_file_name)
-    return file_name
+# def extract_file(browser,excel_dest_path):
+#     # print("REACHED extract file")
+#     file_name=set()
+#     file_list = os.listdir(excel_dest_path)
+#     ret_file_name=set()
+#     for file in file_list:
+#         # print(file)
+#         if os.path.isdir(os.path.join(excel_dest_path,file)):
+#             ret_file_name = extract_file(browser,os.path.join(excel_dest_path,file))
+#         else:
+#             if 'zip' in file:
+#                 zip_file_path = os.path.join(excel_dest_path,file)
+#                 with ZipFile(zip_file_path,"r") as zip_file:
+#                     zip_file.extractall(excel_dest_path)
+#                 os.remove(zip_file_path)
+#                 ret_file_name=extract_file(browser,excel_dest_path)
+#             else:
+#                 file_name.add(os.path.join(excel_dest_path,file))
+#         file_name.update(ret_file_name)
+#     return file_name
 
 def move_downloaded_file(browser,customer_type,file_name,exception=None):
     dow_path = os.path.join(download_file_path,file_name)
