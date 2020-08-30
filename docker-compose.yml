@@ -1,7 +1,7 @@
 version: "3"
 services:
   controller:
-    image: gem_controller
+    image: power_bi
     container_name: bot
     restart: always
     working_dir: /app/main_api/SPI_Group
