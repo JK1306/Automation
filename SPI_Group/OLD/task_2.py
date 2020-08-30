@@ -36,7 +36,7 @@ logging.basicConfig(filename='task.log',
 import configparser
 config = configparser.ConfigParser()
 
-config.read(os.path.dirname(__file__)+'/task.ini')
+config.read(os.path.join(os.path.dirname(__file__),'task.ini'))
 
 # Experimental
 chromOpt = webdriver.ChromeOptions()
