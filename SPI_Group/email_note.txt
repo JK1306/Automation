@@ -1,0 +1,145 @@
+23 - aug - 2020:
+    Suzlon:
+        SPI Power daily report @3:35 PM - 7 locations
+        SKR Wind Energy report @3:35 PM - 2 locations
+        KR Wind Energy report @3:32 PM - 3 locations
+
+22 - aug - 2020:
+    Suzlon:
+        SPI Power daily report @6:46 PM - 7 locations
+        SKR Wind Energy report @6:46 PM - 2 locations
+        KR Wind Energy report @6:46 PM - 1 locations
+        KR Wind Energy report @6:46 PM - 3 locations
+
+21 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of 20082020 @4:22 PM - 9 locations (weekly email structure each locations with each sheet)
+        KR Wind Energy LLP Daily Generation of 20082020 @4:21 PM - 4 locations (weekly email structure each locations with each sheet)
+        SPI Power Daily Generation Report of Date 20/08/2020 @3:37 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 20/08/2020 @3:36 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 20/08/2020 @3:33PM - 1 locations
+    
+    Vestas:
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 20.08.2020 - 4 attachments
+            vesta_daily_ss - 1 locations
+            tenkasi & teni
+            vesta_daily_kr - 5 locations
+            vesta_daily_spi - 1 locations
+
+20 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of Date 19/08/2020 @3:36 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 19/08/2020 @3:36 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 19/08/2020 @3:33 PM - 3 locations
+
+    Vestas:
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 19.08.2020 @12:24 PM - 4  attachments
+            Vestas_Daily_ss_16082020.xlsx - 1 locations
+            teni & teni
+            Vestas_Daily_kr_16082020.xlsx - 5 locations
+            Vestas_Daily_spi_16082020.xlsx - 1 locations
+
+19 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of 18082020 @8:15 PM - 9 locations (weekly email structure each locations with each sheet)
+        KR Wind Energy LLP Daily Generation of 18082020 @8:14 PM - 4 locations (weekly email structure each locations with each sheet)
+        SPI Power Daily Generation Report of Date 18/08/2020 @3:36 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 18/08/2020 @3:36 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 18/08/2020 @3:33 PM - 1 locations
+    
+    Vestas: 
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 18.08.2020 @11:29 AM - 4 attachments
+            Vestas_Daily_ss_16082020.xlsx - 1 locations
+            Tenksasi & Theni Reports August-20.xlsx
+            Vestas_Daily_kr_16082020.xlsx - 5 locations
+            Vestas_Daily_spi_16082020.xlsx - 1 locations
+
+18 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of Date 17/08/2020 @3:36 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 17/08/2020 @3:36 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 17/08/2020 @3:33 PM - 3 locations
+        K R Wind Energy LLP Daily Generation Report of Date 17/08/2020 @3:33 PM - 1 locations
+
+    Vestas:
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 17.08.2020 @2:48 PM - 4 attachments
+            Vestas_Daily_ss_16082020.xlsx - 1 locations
+            Tenksasi & Theni Reports August-20.xlsx
+            Vestas_Daily_kr_16082020.xlsx - 5 locations
+            Vestas_Daily_spi_16082020.xlsx - 1 locations
+            
+17 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of 16082020 @3:38 PM - 9 locations (weekly email structure each locations with each sheet)
+        SPI Power Daily Generation Report of Date 16/08/2020 @3:36PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 16/08/2020 @3:36 PM - 2 locations
+        KR Wind Energy LLP Daily Generation of 16082020 @3:36 PM - 4 locations (weekly email structure each locations with each sheet)
+        SPI Power Daily Generation Report of 31072020 @3:34 PM - 4 attachments
+            SPI Power 30-04-2020.xlsx - 9 locations (weekly email structure each locations with each sheet)
+            SPI Power 31-05-2020.xlsx - 9 locations (weekly email structure each locations with each sheet)
+            SPI Power 30-06-2020.xlsx - 9 locations (weekly email structure each locations with each sheet)
+            SPI Power 31-07-2020.xlsx - 9 locations (weekly email structure each locations with each sheet)
+        K R Wind Energy LLP Daily Generation Report of Date 16/08/2020 @3:33 PM - 3 locations
+        KR Wind Energy LLP Daily Generation Report of 31072020 @3:32 PM - 4 attachments
+            K R Wind Energy LLP 30-04-2020.xlsx - 4 locations (weekly email structure each locations with each sheet)
+            K R Wind Energy LLP 31-05-2020.xlsx - 4 locations (weekly email structure each locations with each sheet)
+            K R Wind Energy LLP 30-06-2020.xlsx - 4 locations (weekly email structure each locations with each sheet)
+            K R Wind Energy LLP 31-07-2020.xlsx - 4 locations (weekly email structure each locations with each sheet)
+    
+    Vestas:
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 14.08.2020-16.08.2020 @2:59 PM - 4 attachments
+            Vestas_Daily_ss_16082020.xlsx - 1 locations
+            Tenksasi & Theni Reports August-20.xlsx
+            Vestas_Daily_kr_16082020.xlsx - 5 locations
+            Vestas_Daily_spi_16082020.xlsx - 1 locations
+
+16 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of Date 15/08/2020 @3:35 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 15/08/2020 @3:35 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 15/08/2020 @3:32 PM - 3 locations
+        K R Wind Energy LLP Daily Generation Report of Date 15/08/2020 @3:32 PM - 1 locations
+
+15 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of Date 14/08/2020 @6:46 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 14/08/2020 @6:46 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 14/08/2020 @6:43 PM - 1 locations
+        
+14 - aug - 2020:
+    Suzlon:        
+        SPI Power Daily Generation Report of Date 13/08/2020 @3:36 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 13/08/2020 @3:36 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 13/08/2020 @3:33 PM - 3 locations
+        K R Wind Energy LLP Daily Generation Report of Date 13/08/2020 @3:33 PM - 1 locations
+
+    Vestas:
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 13.08.2020 @11:23 AM - 4 attachments
+            Vestas_Daily_ss_13082020.xlsx - 1 locations
+            Tenksasi & Theni Reports August-20.xlsx
+            Vestas_Daily_kr_13082020.xlsx - 5 locations
+            Vestas_Daily_spi_13082020.xlsx - 1 locations
+
+13 - aug - 2020:
+    Suzlon:
+        SPI Power Daily Generation Report of Date 12/08/2020 @3:54 PM - 7 locations
+        SKR Wind Energy Daily Generation Report of Date 12/08/2020 @3:36 PM - 2 locations
+        K R Wind Energy LLP Daily Generation Report of Date 12/08/2020 @3:33 PM - 1 locations
+        SPI Power Daily Generation Report of 12082020 @1:14 PM - 9 locations (weekly email structure each locations with each sheet)
+        KR Wind Energy LLP Daily Generation Report of 12082020 @1:05 PM - 4 locations (weekly email structure each locations with each sheet)
+    
+    Vestas:
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 12.08.2020 - 4 attachments
+            Vestas_Daily_ss_13082020.xlsx - 1 locations
+            Tenksasi & Theni Reports August-20.xlsx
+            Vestas_Daily_kr_13082020.xlsx - 5 locations
+            Vestas_Daily_spi_13082020.xlsx - 1 locations
+
+12 - aug - 2020:
+    Vestas:
+        M/S KR Energy LLP & SPI Power of Wegs Daily generation report - 11.08.2020 @11:36 PM - 4 attachments
+            Tenksasi & Theni Reports August-20.xlsx
+            Vestas_Daily_kr_09082020.xlsx - 5 locations
+            Vestas_Daily_spi_09082020.xlsx - 1 locations
+            Vestas_Daily_ss_09082020.xlsx - 1 locations
+

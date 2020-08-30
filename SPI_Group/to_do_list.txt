@@ -1,0 +1,13 @@
+Download Section :
+    1. Sign-In into the gmail
+    2. Iterate through the email based on subject.
+    3. Download documents from justified email based on rules and conditions.
+    3. Download the files and assemble into one folder.
+
+Inserting the data into the database:
+    1. Select the excel type file only.
+    2. Classify based on customer type.
+    3. Then classify between daily report and weekly report.
+    4. Convert the reading the excel file static to dynamic.
+    5. Then insert into the tables accordingly into the database.
+    6. Update the daily gen report on each insertion.
