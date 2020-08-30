@@ -1,0 +1,16 @@
+.vscode
+*.xlsx
+*.zip
+*.log
+*.json
+*.code-workspace
+SPI Group/*.txt
+SPI Group/*.xls
+SPI Group/*.json
+BOTTestLoad/
+local_folder_test_7/
+SAGE/
+SPI_virtual/
+Work/
+SPI Group/Documents/
+SPI Group/OLD/
