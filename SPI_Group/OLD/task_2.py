@@ -39,15 +39,23 @@ config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), 'task.ini'))
 
 # Experimental
-chromOpt = webdriver.ChromeOptions()
+
+#chromOpt = webdriver.ChromeOptions()
+
+os.makedirs(config['Path']['download_path'],exist_ok=True)
+os.makedirs(config['Path']['copy_path'],exist_ok=True)
+
 prefs = {"download.default_directory": config['Path']['download_path']}
-chromOpt.add_experimental_option("prefs", prefs)
-chromOpt.add_argument(
-    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36")
-chromOpt.set_headless(headless=True)
-chromOpt.add_argument('--headless')
-browser = webdriver.Chrome(
-    config['Path']['chrome_driver_path'], chrome_options=chromOpt)
+#chromOpt.add_experimental_option("prefs", prefs)
+#chromOpt.add_argument(
+ #   "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36")
+#chromOpt.set_headless(headless=True)
+#chromOpt.add_argument('--headless')
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+browser = webdriver.Chrome(options=options)
 download_file_path = os.path.join(os.path.dirname(
     __file__), config['Path']['download_path'])
 copy_file_path = os.path.join(os.path.dirname(
