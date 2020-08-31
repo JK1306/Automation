@@ -22,12 +22,17 @@ RUN cd main_api && . ./bin/activate
 RUN pip3 install gunicorn
 COPY requirements.txt /app/main_api
 
-RUN pip3 install -r /app/requirements.txt
+RUN pip3 install -r /app/main_api/requirements.txt
 
 
 RUN mkdir -p /app/main_api/SPI_Group
 
+
 COPY ./SPI_Group/OLD /app/main_api/SPI_Group
+RUN ls
+COPY ./SPI_Group/.env /app/main_api/SPI_Group
+RUN ls  main_api/SPI_Group
+ENV PATH=$PATH:/app/main_api/SPI_Group/.
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 RUN apt-get install vim -y
 RUN ls -l
