@@ -48,7 +48,7 @@ os.makedirs(config['Path']['copy_path'],exist_ok=True)
 
 prefs = {"download.default_directory": config['Path']['download_path']}
 options.add_experimental_option("prefs", prefs)
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.68 Safari/537.36")
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36")
 #chromOpt.set_headless(headless=True)
 #chromOpt.add_argument('--headless')
 #options = webdriver.ChromeOptions()
