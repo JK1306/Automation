@@ -3,6 +3,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 import logging
 import os
 import configparser
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
@@ -47,7 +48,7 @@ os.makedirs(config['Path']['copy_path'],exist_ok=True)
 
 prefs = {"download.default_directory": config['Path']['download_path']}
 options.add_experimental_option("prefs", prefs)
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36")
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.68 Safari/537.36")
 #chromOpt.set_headless(headless=True)
 #chromOpt.add_argument('--headless')
 #options = webdriver.ChromeOptions()
