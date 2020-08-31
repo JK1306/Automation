@@ -42,14 +42,15 @@ config.read(os.path.join(os.path.dirname(__file__), 'task.ini'))
 
 options = webdriver.ChromeOptions()
 
-os.makedirs(config['Path']['download_path'],exist_ok=True)
-os.makedirs(config['Path']['copy_path'],exist_ok=True)
+os.makedirs(config['Path']['download_path'], exist_ok=True)
+os.makedirs(config['Path']['copy_path'], exist_ok=True)
 
 prefs = {"download.default_directory": config['Path']['download_path']}
 options.add_experimental_option("prefs", prefs)
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
-#chromOpt.set_headless(headless=True)
-#chromOpt.add_argument('--headless')
+options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
+# chromOpt.set_headless(headless=True)
+# chromOpt.add_argument('--headless')
 #options = webdriver.ChromeOptions()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
@@ -701,5 +702,5 @@ def read_excel_file(browser, file_path, customer_type):
 
 browser.get(config["Website"]["url"])
 # browser.implicitly_wait(30)
-# login_gmail(browser)
+login_gmail(browser)
 # browser.quit()
