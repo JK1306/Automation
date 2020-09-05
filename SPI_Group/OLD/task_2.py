@@ -55,7 +55,7 @@ options.add_argument('--headless')
 # options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-browser = webdriver.Chrome(options=options)
+browser = webdriver.Chrome(config['Path']['chrome_driver_path'],options=options)
 
 # browser= webdriver.Chrome(config['Path']['chrome_driver_path'],chrome_options=chromOpt)
 print(config['Path']['chrome_driver_path'])
@@ -636,6 +636,7 @@ def read_excel_file(browser,file_path,customer_type):
 
 
                 if 'suzlon_weekly' in customer_type:
+		    loggin.info("It enters the SUZLON WEEKLY in excel enter function")
                     excel_df = pd.read_excel(file_path,sheet_name=None,header=None)
                     file_name = file_path.split('\\')[-1]
                     logging.info("-------- > Table used : suzlon_xl_weekly_hist and spi_windmill_gen_daily_report is get updated")
