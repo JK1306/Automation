@@ -245,7 +245,6 @@ def validate_mail(browser):
                     f'//tr[contains(@class,"zA")][{ele}]/td[8]/span').get_attribute('title')
                 mail_id = [config['Mail'][x] for x in config['Mail']]
                 is_customer_mail = False
-<<<<<<< HEAD
                 current_date = convert_time_zone(datetime.now())
                 mail_recived_time = insert_time_zone(datetime.strptime(time_check,'%a, %b %d, %Y, %I:%M %p'))
                 subject_check = browser.find_element_by_xpath(f'//tr[contains(@class,"zA")][{ele}]/td[5]/div[1]/div[1]/div[1]/span/span').text
@@ -261,7 +260,6 @@ def validate_mail(browser):
                     if is_customer_mail and current_date.date() == mail_recived_time.date():
                         element.click()
                         logging.info("Mail Element clicked")
-<<<<<<< HEAD
                         mail_element = browser.find_elements_by_xpath(f'//div[@class="aQH"]/span[@download_url]')
                         vestas_limit_end_time = datetime.strptime(config["Mail Time"]['vestas_end_time'],'%I:%M %p')
                         vestas_limit_end_time = insert_time_zone(vestas_limit_end_time.replace(day=current_date.day,month=current_date.month,year=current_date.year))
@@ -431,7 +429,6 @@ def exception_case(browser, customer_type=None):
                 time_check = convert_time_zone(time_check)
                 print("Converted time zone : ", time_check)
                 # if mail_subject in subject_check and time_check == mail_time:
-<<<<<<< HEAD
                 print(email_index," ",subject_check," : ",time_check," : ",company)
                 logging.info(f"------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
                 is_check_mail = False
