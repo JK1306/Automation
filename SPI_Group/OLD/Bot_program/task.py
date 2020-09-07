@@ -246,13 +246,6 @@ def validate_mail(browser):
                 mail_id = [config['Mail'][x] for x in config['Mail']]
                 is_customer_mail = False
 
-
-<< << << < HEAD
-
-
-<< << << < HEAD
-== == == =
->>>>>> > f9c772c32d9f84b06ea7e161ac8c9f9275fff749
                 current_date = convert_time_zone(datetime.now())
                 mail_recived_time = insert_time_zone(
                     datetime.strptime(time_check, '%a, %b %d, %Y, %I:%M %p'))
@@ -448,8 +441,10 @@ def exception_case(browser, customer_type=None):
                 time_check = convert_time_zone(time_check)
                 print("Converted time zone : ", time_check)
                 # if mail_subject in subject_check and time_check == mail_time:
-                print(email_index," ",subject_check," : ",time_check," : ",company)
-                logging.info(f"------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
+                print(email_index, " ", subject_check,
+                      " : ", time_check, " : ", company)
+                logging.info(
+                    f"------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
                 is_check_mail = False
                 for x in mail_subject:
                     if x in subject_check:
