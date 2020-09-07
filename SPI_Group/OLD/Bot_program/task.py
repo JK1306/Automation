@@ -42,11 +42,7 @@ config.read(os.path.join(os.getenv('INI_PATH'), 'task.ini'))
 
 # Experimental
 options = webdriver.ChromeOptions()
-# download_path = os.path.join(os.path.dirname(__file__),config['Path']['download_path'])
-# download_file_path = os.path.dirname(__file__)+"/"+config['Path']['download_path']
 suzlon_weekly_file = []
-# copy_file_path = os.path.dirname(__file__)+"/"+config['Path']['copy_path']
-# print('------------>',download_file_path)
 download_file_path = os.path.join(os.path.dirname(
     __file__), config['Path']['download_path'])
 copy_file_path = os.path.join(os.path.dirname(
@@ -57,13 +53,10 @@ prefs = {"download.default_directory": download_file_path}
 options.add_experimental_option("prefs", prefs)
 options.add_argument(
     "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
-# options.set_headless(headless=True)
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 browser = webdriver.Chrome(options=options)
-# browser= webdriver.Chrome(config['Path']['chrome_driver_path'],chrome_options=chromOpt)
-
 print("Path : ", download_file_path, "  ", copy_file_path)
 print(config)
 
