@@ -291,8 +291,7 @@ def validate_mail(browser):
                         # vestas daily download
                         elif "vestas" in customer_type:
                             if mail_recived_time < vestas_limit_end_time and mail_recived_time > vestas_limit_start_time:
-                                logging.info(
-                                    f"This mail is {customer_type} type and the subject is '{subject_check}'")
+                                logging.info(f"This mail is {customer_type} type and the subject is '{subject_check}'")
                                 mail_val = [subject_check,
                                             customer_type, time_check]
                                 download_button_click(browser, mail_val)
@@ -304,8 +303,7 @@ def validate_mail(browser):
                         for swf in suzlon_weekly_file:
                             read_excel_file(browser, swf, 'suzlon_weekly')
                         suzlon_weekly_file.clear()
-                        logging.info(
-                            "Daily normal flow program came to and END")
+                        logging.info("Daily normal flow program came to and END")
                         break
                 except Exception as e:
                     logging.error(
