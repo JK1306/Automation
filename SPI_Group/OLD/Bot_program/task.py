@@ -37,8 +37,10 @@ logging.basicConfig(filename='task.log',
                     level=logging.DEBUG)
 
 config = configparser.ConfigParser()
+print("---------------> ENvironement Valu : ",os.environ)
 print(os.getenv('INI_PATH'))
 print(os.path.dirname(os.getenv('INI_PATH'))+'/task.ini')
+print("*******",os.path.join(os.getenv('INI_PATH'), 'task.ini'))
 config.read(os.path.join(os.getenv('INI_PATH'), 'task.ini'))
 
 # Experimental
@@ -915,8 +917,8 @@ bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace
 logging.info(
     'Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
 print(bot_time)
-browser.get(config["Website"]["url"])
+# browser.get(config["Website"]["url"])
 logging.info("Bot run starts here")
-login_gmail(browser)
+# login_gmail(browser)
 
 browser.quit()
