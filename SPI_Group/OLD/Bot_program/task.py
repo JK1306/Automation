@@ -36,7 +36,7 @@ logging.basicConfig(filename='task.log',
                     level=logging.DEBUG)
 
 config = configparser.ConfigParser()
-
+print(os.getenv('INI_PATH'))
 print(os.path.dirname(os.getenv('INI_PATH'))+'/task.ini')
 config.read(os.path.join(os.getenv('INI_PATH'), 'task.ini'))
 
