@@ -6,7 +6,7 @@ services:
     container_name: bot
     restart: always
     working_dir: /app/main_api/SPI_Group
-    command: ["python3", "task_2.py"]
+    command: ["python3", "task.py"]
 
   sql_db:
     image: mysql:5.7

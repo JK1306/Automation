@@ -35,17 +35,20 @@ logging.basicConfig(filename='task.log',
 import configparser
 config = configparser.ConfigParser()
 
-config.read(os.path.dirname(__file__)+'task.ini')
+print(os.path.dirname(__file__)+'/task.ini')
+config.read(os.path.join(os.path.dirname(__file__),'task.ini'))
 
 # Experimental
 options = webdriver.ChromeOptions()
 # download_path = os.path.join(os.path.dirname(__file__),config['Path']['download_path'])
 # download_file_path = os.path.dirname(__file__)+"/"+config['Path']['download_path']
-download_file_path = config['Path']['download_path']
 suzlon_weekly_file = []
 # copy_file_path = os.path.dirname(__file__)+"/"+config['Path']['copy_path']
-copy_file_path = config['Path']['copy_path']
-print('------------>',download_file_path)
+# print('------------>',download_file_path)
+download_file_path = os.path.join(os.path.dirname(
+    __file__), config['Path']['download_path'])
+copy_file_path = os.path.join(os.path.dirname(
+    __file__), config['Path']['copy_path'])
 os.makedirs(download_file_path,exist_ok=True)
 os.makedirs(copy_file_path,exist_ok=True)
 prefs = {"download.default_directory" : download_file_path}
@@ -55,12 +58,24 @@ options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-browser = webdriver.Chrome(config['Path']['chrome_driver_path'],options=options)
-
+browser = webdriver.Chrome(options=options)
 # browser= webdriver.Chrome(config['Path']['chrome_driver_path'],chrome_options=chromOpt)
-print(config['Path']['chrome_driver_path'])
+
 print("Path : ",download_file_path,"  ",copy_file_path)
 print(config)
+
+def convert_time_zone(date_obj):
+    if datetime.utcnow().hour == datetime.now().hour:
+        from_tz = tz.gettz('UTC')
+        to_tz = tz.gettz('Asia/Kolkata')
+        date_obj = date_obj.replace(tzinfo=from_tz)
+        date_obj = date_obj.astimezone(to_tz)
+        return date_obj
+    else:
+         return date_obj.replace(tzinfo=to_tz)
+
+def insert_time_zone(date_obj):
+    return date_obj.replace(tzinfo=tz.gettz('Asia/Kolkata'))
 
 def last_mod_time(fname):
     folder_time= os.path.getmtime(fname)
@@ -146,13 +161,13 @@ def download_button_click(browser,mail_val,exception_case_file=False):
         sending_mail('RAP Bot Error Notification',f'No attachments are found in {mail_val[0]} sent on {mail_val[2]} Please do check to it','Bussiness')
 
 def email_back_button_click(browser):
-    email_back = ActionChains(browser)
-    back_button = browser.find_element_by_xpath('//*[@id=":4"]/div[2]/div[1]/div/div[1]/div')
-    email_back.move_to_element(back_button)
     try:
+        email_back = ActionChains(browser)
+        back_button = browser.find_element_by_xpath('//*[@id=":4"]/div[2]/div[1]/div/div[1]/div')
+        email_back.move_to_element(back_button)
         WebDriverWait(browser,20).until(EC.element_to_be_clickable((By.XPATH,'//div[@title="Back to Inbox" and @role="button"]'))).click()
-    except:
-        pass
+    except Exception as e:
+        logging.error("Exception occured in email_back_button_click function message : {}".format(e))
 
 def validate_mail(browser):
     logging.info("Entered Validate_mail function")
@@ -321,7 +336,7 @@ def exception_case(browser,customer_type=None):
         print("entered try block")
         for email_index in range(1,len(element_len)+1):
             content_page = browser.find_elements_by_xpath('//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
-            check_count =0 
+            check_count =0
             while len(content_page) !=0:
                 print("Waiting in while loop.........")
                 logging.info("Waiting in while loop............")
@@ -340,13 +355,16 @@ def exception_case(browser,customer_type=None):
                 mail_subject = mail_subject.split(',')
                 # mail_time = datetime.strptime(config['Exception Config'][company],'%d/%m/%Y %I:%M %p')
                 mail_time = config['Exception Config'][company].split('-')
-                mail_time = [datetime.strptime(x.strip(),'%d/%m/%Y %I:%M %p') for x in mail_time]
+                mail_time = [insert_time_zone(datetime.strptime(x.strip(),'%d/%m/%Y %I:%M %p')) for x in mail_time]
                 mail_check_elemt = browser.find_element_by_xpath(f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[4]/div[1]/span/span').get_attribute('email')
                 time_check = browser.find_element_by_xpath(f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[8]/span').get_attribute('title')
+                print(time_check)
                 subject_check = browser.find_element_by_xpath(f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div[1]/div[1]/div[1]/span/span').text
                 time_check = datetime.strptime(time_check,'%a, %b %d, %Y, %I:%M %p')
+                time_check = convert_time_zone(time_check)
+                print("Converted time zone : ",time_check)
                 # if mail_subject in subject_check and time_check == mail_time:
-                print(subject_check," : ",time_check," : ",company)
+                print(email_index," ",subject_check," : ",time_check," : ",company)
                 logging.info(f"------------------------> This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
                 is_check_mail = False
                 for x in mail_subject:
@@ -369,7 +387,6 @@ def exception_case(browser,customer_type=None):
                         email_back_button_click(browser)
                         break
                 print(mail_time[0] > time_check)
-                print(any([search_over[x] for x in search_over]))
                 print(search_over)
                 print(mail_time[0])
                 print(time_check)
@@ -393,6 +410,7 @@ def exception_case(browser,customer_type=None):
             browser.implicitly_wait(20)
             exception_case(browser,[x for x in search_over if search_over[x]])
     except Exception as e:
+        print(f"The exceptin occured in exception function is : {e}")
         logging.info(f"Error has occured in exception case function : {e}")
 
 def move_downloaded_file(browser,customer_type,file_name,exception=None):
@@ -466,6 +484,8 @@ def read_excel_file(browser,file_path,customer_type):
                 if "suzlon_daily" in customer_type:
                     sheet_val=pd.read_excel(file_path,sheet_name=None)
                     file_name = file_path.split('/')[-1]
+                    duplicate_record_sd = []
+                    recordInserted = []
                     for sheet_name in sheet_val:
                         if "generation" in sheet_name.lower(): 
                             doc_val = sheet_val[sheet_name].fillna('')
@@ -511,13 +531,21 @@ def read_excel_file(browser,file_path,customer_type):
                                         location_values = location.get(locNoVal)
                                         db_command2=f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}');"
                                         cursor.execute(db_command)
-                                        cursor.execute(db_command2)
+                                        suzlon_daily_check = check_valuein_reporting_layer(cursor,[str(x.get('genDate')).split(' ')[0],customerName,x.get('locNo')])
+                                        if suzlon_daily_check:
+                                            recordInserted.append(db_command2)
+                                            cursor.execute(db_command2)
+                                        else:
+                                            duplicate_record_sd.append("{} - {} - {}".format(x.get('genDate'),customerName,x.get('locNo')))
                                 print("\n\nSuccessfully Inserted in suzlon daily\n\n")
                                 logging.info(f"Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database")
-                                sending_mail(f"RAP Bot Successfull data uploaded notification for {customer_type}",f"Data from {file_name} is Successfully Inserted into  Database","Bussiness")
+                                if recordInserted:
+                                    sending_mail(f"RAP Bot Successfull data uploaded notification for {customer_type}",f"Data from {file_name} is Successfully Inserted into  Database","Bussiness")
                             except Exception as e:
                                 logging.error(f"An error occured while inserting data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
                                 sending_mail(f"RAP Bot notification for error in Database insert",f"Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}","Admin")
+                    if duplicate_record_sd:
+                        sending_mail(f"RAP Bot notification for duplicate records",f"Data from {file_name} file contains {str(duplicate_record_sd)} duplicate records","Admin")
 
 
                 if "vestas_daily" in customer_type:
@@ -729,15 +757,16 @@ def read_excel_file(browser,file_path,customer_type):
 bot_run= True
 bot_run_status = True
 # while(bot_run):
-    # bot_time = datetime.strptime(config['Bot']['schedule_time'],'%I:%M %p').replace(day=datetime.now().day,month=datetime.now().month,year=datetime.now().year)
-    # logging.error
-    # logging.info('------------->{}'.format(datetime.now()))
-    # print(bot_time)
-    # print("---->",datetime.now())
-    # if datetime.now() >= bot_time and bot_run_status:
-        # bot_run_status = False
-browser.get(config["Website"]["url"])
-logging.info("Bot run starts here")
-login_gmail(browser)
-browser.quit()
-
+current_time = convert_time_zone(datetime.now()).replace(second=0,microsecond=0)
+bot_time = datetime.strptime(config['Bot']['schedule_time'],'%I:%M %p').replace(day=current_time.day,month=current_time.month,year=current_time.year,tzinfo=tz.gettz('Asia/Kolkata'))
+# logging.error
+logging.info('Bot run time ---> {} and Current time ---> {}'.format(bot_time,current_time))
+print(bot_time)
+print("---->",current_time)
+if  current_time == bot_time and bot_run_status:
+    bot_run_status = False
+    logging.info(f"Bot start working at {str(current_time)}")
+    browser.get(config["Website"]["url"])
+    logging.info("Bot run starts here")
+    login_gmail(browser)
+    browser.quit()
