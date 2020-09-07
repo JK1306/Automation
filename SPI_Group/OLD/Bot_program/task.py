@@ -248,6 +248,11 @@ def validate_mail(browser):
 
 
 << << << < HEAD
+
+
+<< << << < HEAD
+== == == =
+>>>>>> > f9c772c32d9f84b06ea7e161ac8c9f9275fff749
                 current_date = convert_time_zone(datetime.now())
                 mail_recived_time = insert_time_zone(
                     datetime.strptime(time_check, '%a, %b %d, %Y, %I:%M %p'))
@@ -265,7 +270,6 @@ def validate_mail(browser):
                     if is_customer_mail and current_date.date() == mail_recived_time.date():
                         element.click()
                         logging.info("Mail Element clicked")
-
                         mail_element = browser.find_elements_by_xpath(
                             f'//div[@class="aQH"]/span[@download_url]')
                         vestas_limit_end_time = datetime.strptime(
