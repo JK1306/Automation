@@ -7,6 +7,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.common import exceptions
 import shutil
 from datetime import datetime
 from datetime import timedelta
@@ -128,6 +129,9 @@ def login_gmail(browser):
         browser.implicitly_wait(20)
         logging.info("Logged in successfully")
         validate_mail(browser)
+    except exceptions.StaleElementReferenceException as se:
+        logging.error(f"Stale element exception occured : {se}")
+        login_gmail(browser)
     except Exception as e:
         logging.error(f"Error Occured in login_mail function --------------------> {e}")
         sending_mail("RAP Bot Error Notification",f'Error Occured in login_mail function --------------------> {e}','Admin')
@@ -207,8 +211,8 @@ def validate_mail(browser):
                 time_check = browser.find_element_by_xpath(f'//tr[contains(@class,"zA")][{ele}]/td[8]/span').get_attribute('title')
                 mail_id = [config['Mail'][x] for x in config['Mail']]
                 is_customer_mail = False
-                current_date = datetime.now()
-                mail_recived_time = datetime.strptime(time_check,'%a, %b %d, %Y, %I:%M %p')
+                current_date = convert_time_zone(datetime.now())
+                mail_recived_time = insert_time_zone(datetime.strptime(time_check,'%a, %b %d, %Y, %I:%M %p'))
                 subject_check = browser.find_element_by_xpath(f'//tr[contains(@class,"zA")][{ele}]/td[5]/div[1]/div[1]/div[1]/span/span').text
                 print(mail_check_elemt," : ",time_check," : ",subject_check)
                 customer_type = ''
@@ -224,14 +228,14 @@ def validate_mail(browser):
                         logging.info("Mail Element clicked")
                         mail_element = browser.find_elements_by_xpath(f'//div[@class="aQH"]/span[@download_url]')
                         vestas_limit_end_time = datetime.strptime(config["Mail Time"]['vestas_end_time'],'%I:%M %p')
-                        vestas_limit_end_time = vestas_limit_end_time.replace(day=datetime.now().day,month=datetime.now().month,year=datetime.now().year)
+                        vestas_limit_end_time = insert_time_zone(vestas_limit_end_time.replace(day=current_date.day,month=current_date.month,year=current_date.year))
                         vestas_limit_start_time = datetime.strptime(config["Mail Time"]['vestas_start_time'],'%I:%M %p')
-                        vestas_limit_start_time = vestas_limit_start_time.replace(day=datetime.now().day,month=datetime.now().month,year=datetime.now().year)
+                        vestas_limit_start_time = insert_time_zone(vestas_limit_start_time.replace(day=current_date.day,month=current_date.month,year=current_date.year))
 
                         suzlon_limit_end_time = datetime.strptime(config["Mail Time"]['suzlon_end_time'],'%I:%M %p')
-                        suzlon_limit_end_time = suzlon_limit_end_time.replace(day=datetime.now().day,month=datetime.now().month,year=datetime.now().year)
+                        suzlon_limit_end_time = insert_time_zone(suzlon_limit_end_time.replace(day=current_date.day,month=current_date.month,year=current_date.year))
                         suzlon_limit_start_time = datetime.strptime(config["Mail Time"]['suzlon_start_time'],'%I:%M %p')
-                        suzlon_limit_start_time = suzlon_limit_start_time.replace(day=datetime.now().day,month=datetime.now().month,year=datetime.now().year)
+                        suzlon_limit_start_time = insert_time_zone(suzlon_limit_start_time.replace(day=current_date.day,month=current_date.month,year=current_date.year))
 
                         # suzlon daily download
                         if "suzlon" in customer_type and "daily" in subject_check.lower():
@@ -257,7 +261,6 @@ def validate_mail(browser):
                         email_back_button_click(browser)
                     # END of normal flow program
                     elif current_date.date() != mail_recived_time.date():
-
                         for swf in suzlon_weekly_file:
                             read_excel_file(browser,swf,'suzlon_weekly')
                         suzlon_weekly_file.clear()
@@ -365,7 +368,7 @@ def exception_case(browser,customer_type=None):
                 print("Converted time zone : ",time_check)
                 # if mail_subject in subject_check and time_check == mail_time:
                 print(email_index," ",subject_check," : ",time_check," : ",company)
-                logging.info(f"------------------------> This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
+                logging.info(f"------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
                 is_check_mail = False
                 for x in mail_subject:
                     if x in subject_check:
@@ -763,10 +766,13 @@ bot_time = datetime.strptime(config['Bot']['schedule_time'],'%I:%M %p').replace(
 logging.info('Bot run time ---> {} and Current time ---> {}'.format(bot_time,current_time))
 print(bot_time)
 print("---->",current_time)
+"""
 if  current_time == bot_time and bot_run_status:
     bot_run_status = False
     logging.info(f"Bot start working at {str(current_time)}")
-    browser.get(config["Website"]["url"])
-    logging.info("Bot run starts here")
-    login_gmail(browser)
-    browser.quit()
+"""
+browser.get(config["Website"]["url"])
+logging.info("Bot run starts here")
+login_gmail(browser)
+
+browser.quit()

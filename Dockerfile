@@ -34,7 +34,7 @@ COPY ./SPI_Group/OLD/Bot_program /app/main_api/SPI_Group
 RUN ls
 COPY ./SPI_Group/.env /app/main_api/SPI_Group
 RUN ls  main_api/SPI_Group
-ENV PATH=$PATH:/app/main_api/SPI_Group/OLD/Bot_program/.
+ENV PATH=$PATH:/app/main_api/SPI_Group/.
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 RUN apt-get install vim -y
 RUN ls -l
