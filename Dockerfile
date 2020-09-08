@@ -32,7 +32,7 @@ RUN mkdir -p /app/main_api/SPI_Group
 
 COPY ./SPI_Group/OLD/Bot_program /app/main_api/SPI_Group
 RUN ls
-COPY .env /app/main_api/SPI_Group/
+# COPY ./.env /app/main_api/SPI_Group
 RUN ls  main_api/SPI_Group
 ENV PATH=$PATH:/app/main_api/SPI_Group/.
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata

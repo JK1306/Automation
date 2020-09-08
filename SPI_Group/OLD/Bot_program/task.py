@@ -37,31 +37,11 @@ logging.basicConfig(filename='task.log',
                     level=logging.DEBUG)
 
 config = configparser.ConfigParser()
-print("---------------> ENvironement Valu : ",os.environ)
-print(os.getenv('INI_PATH'))
-print(os.path.dirname(os.getenv('INI_PATH'))+'/task.ini')
-print("*******",os.path.join(os.getenv('INI_PATH'), 'task.ini'))
-config.read(os.path.join(os.getenv('INI_PATH'), 'task.ini'))
-
-# Experimental
-options = webdriver.ChromeOptions()
-suzlon_weekly_file = []
-download_file_path = os.path.join(os.path.dirname(
-    __file__), config['Path']['download_path'])
-copy_file_path = os.path.join(os.path.dirname(
-    __file__), config['Path']['copy_path'])
-os.makedirs(download_file_path, exist_ok=True)
-os.makedirs(copy_file_path, exist_ok=True)
-prefs = {"download.default_directory": download_file_path}
-options.add_experimental_option("prefs", prefs)
-options.add_argument(
-    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-browser = webdriver.Chrome(options=options)
-print("Path : ", download_file_path, "  ", copy_file_path)
-print(config)
+# print("---------------> ENvironement Valu : ",os.environ)
+# print(os.getenv('INI_PATH'))
+# print(os.path.dirname(os.getenv('INI_PATH'))+'/task.ini')
+# print("*******",os.path.join(os.getenv('INI_PATH'), 'task.ini'))
+# config.read(os.path.join(os.getenv('INI_PATH'), 'task.ini'))
 
 
 def convert_time_zone(date_obj):
@@ -124,8 +104,7 @@ def sending_mail(subject, body_mes, mail_type):
 
 def login_gmail(browser):
     try:
-        WebDriverWait(browser, 45).until(EC.element_to_be_clickable(
-            (By.XPATH, '//input[@type="email" and @aria-label="Email or phone"]'))).send_keys(config['Login Details']['user_name'])
+        WebDriverWait(browser, 45).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="email" and @aria-label="Email or phone"]'))).send_keys(config['Login Details']['user_name'])
         # WebDriverWait(browser, 45).until(EC.element_to_be_clickable((By.XPATH,'//input[@id="identifierId"]'))).send_keys(config['Login Details']['user_name'])
         logging.info("Email Entered")
         browser.find_element_by_xpath('//button[span="Next"]').click()
@@ -139,11 +118,12 @@ def login_gmail(browser):
         logging.info("Logged in successfully")
         validate_mail(browser)
     except exceptions.StaleElementReferenceException as se:
+        print(f"Stale element exception occured : {se}")
         logging.error(f"Stale element exception occured : {se}")
         login_gmail(browser)
     except Exception as e:
-        logging.error(
-            f"Error Occured in login_mail function --------------------> {e}")
+        print(f"Error occured in login_mail : {e}")
+        logging.error(f"Error Occured in login_mail function --------------------> {e}")
         sending_mail("RAP Bot Error Notification",
                      f'Error Occured in login_mail function --------------------> {e}', 'Admin')
 
@@ -576,6 +556,7 @@ def read_excel_file(browser, file_path, customer_type):
                     recordInserted = []
                     for sheet_name in sheet_val:
                         if "generation" in sheet_name.lower():
+                            logging.info(f"INSERT GENERATION Data: {file_name}")
                             doc_val = sheet_val[sheet_name].fillna('')
                             for y in doc_val.columns:
                                 if "date" in y.lower():
@@ -655,9 +636,40 @@ def read_excel_file(browser, file_path, customer_type):
                                         f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
                             except Exception as e:
                                 logging.error(
-                                    f"An error occured while inserting data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
+                                    f"An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
                                 sending_mail(f"RAP Bot notification for error in Database insert",
-                                             f"Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+                                             f"GENERATION Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+                        elif 'break' in sheet_name.lower():
+                            logging.info(f"INSERT BREAKDOWN Data: {file_name}")
+                            df = sheet_val[x].fillna("")
+                            for y in df.columns:
+                                if 'gen' in y.lower() and 'date'in y.lower():
+                                    df.rename(columns={y:'genDate'},inplace=True)
+                                if "customer" in y.lower() or 'company' in y.lower():
+                                    df.rename(columns={y:'customerName'},inplace=True)
+                                if "state" in y.lower() or "site" in y.lower() or "section" in y.lower() or y.lower() == "mw":
+                                    df.rename(columns={y:y.lower()},inplace=True)
+                                if 'loc' in y.lower():
+                                    df.rename(columns={y:'locNo'},inplace=True)
+                                if 'breakdown' in y.lower() and 'remark' in y.lower():
+                                    df.rename(columns={y:'breakDownRemark'},inplace=True)
+                                if 'formula' in y.lower() and 'parameter' in y.lower():
+                                    df.rename(columns={y:'formulaParameter'},inplace=True)
+                                if 'breakdown' in y.lower() and 'hrs' in y.lower():
+                                    df.rename(columns={y:'breakDownHr'},inplace=True)
+                            try:
+                                for y_i,y in df.iterrows():
+                                    if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) or re.match(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}',str(y.get('genDate'))):
+                                        date_time_val = datetime.strptime(y.get('genDate'),'%d-%b-%Y').strftime('%Y-%m-%d') if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) else str(y.get('genDate')).split(' ')[0]
+                                        db_query = f"insert into suzlon_breakdown_data(genDate,customername,state,site,section,mw,locno,remarks,breakdownhrs,parameter) values('{date_time_val}','{y.get('customerName')}','{y.get('state')}','{y.get('site')}','{y.get('section')}',{y.get('mw')},'{y.get('locNo')}','{y.get('breakDownRemark')}',{y.get('breakDownHr')},'{y.get('formulaParameter')}')"
+                                        # print(db_query)
+                                        cursor.execute(db_query)
+                                    # else:
+                                    #     print(y)
+                            except Exception as be:
+                                logging.error(f"Error occured while inserting {file_name} BREAK DOWN data : {be}")
+                                sending_mail(f"RAP Bot notification for error in Database insert",f"BREAKDOWN Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+
                     if duplicate_record_sd:
                         sending_mail(f"RAP Bot notification for duplicate records",
                                      f"Data from {file_name} file contains {str(duplicate_record_sd)} duplicate records", "Admin")
@@ -908,17 +920,34 @@ def read_excel_file(browser, file_path, customer_type):
 # browser.implicitly_wait(30)
 bot_run = True
 bot_run_status = True
-# while(bot_run):
-current_time = convert_time_zone(
-    datetime.now()).replace(second=0, microsecond=0)
-bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(
-    day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
-# logging.error
-logging.info(
-    'Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
-print(bot_time)
-# browser.get(config["Website"]["url"])
-logging.info("Bot run starts here")
-# login_gmail(browser)
-
-browser.quit()
+while(bot_run):
+    config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
+    options = webdriver.ChromeOptions()
+    suzlon_weekly_file = []
+    download_file_path = os.path.join(os.path.dirname(
+        __file__), config['Path']['download_path'])
+    copy_file_path = os.path.join(os.path.dirname(
+        __file__), config['Path']['copy_path'])
+    os.makedirs(download_file_path, exist_ok=True)
+    os.makedirs(copy_file_path, exist_ok=True)
+    prefs = {"download.default_directory": download_file_path}
+    options.add_experimental_option("prefs", prefs)
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    browser = webdriver.Chrome(options=options)
+    print("Path : ", download_file_path, "  ", copy_file_path)
+    current_time = convert_time_zone(
+        datetime.now()).replace(second=0, microsecond=0)
+    bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(
+        day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
+    if current_time == bot_time:
+        sending_mail("RAP Bot started","RAP Bot started running","ADMIN")
+        logging.info(
+            'Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
+        print(bot_time)
+        browser.get(config["Website"]["url"])
+        logging.info("Bot run starts here")
+        login_gmail(browser)
+        browser.quit()
