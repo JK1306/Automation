@@ -59,22 +59,22 @@ def insert_time_zone(date_obj):
     return date_obj.replace(tzinfo=tz.gettz('Asia/Kolkata'))
 
 
-def last_mod_time(fname):
-    folder_time = os.path.getmtime(fname)
-    return os.path.getmtime(fname)
+# def last_mod_time(fname):
+#     folder_time = os.path.getmtime(fname)
+#     return os.path.getmtime(fname)
 
 
-def move_zip_file(browser, customer_type):
-    SECONDS_IN_DAY = 400
-    # now= datetime.now().time().second
-    now = time.time()
-    before = now - SECONDS_IN_DAY
-    copy_path = download_file_path
-    #  logging.info(f"RAPBot has started moving the file to {output_path}")
-    for file_name in os.listdir(copy_path):
-        target_path = os.path.join(copy_path, file_name)
-        if last_mod_time(target_path) > before:
-            return file_name
+# def move_zip_file(browser, customer_type):
+#     SECONDS_IN_DAY = 400
+#     # now= datetime.now().time().second
+#     now = time.time()
+#     before = now - SECONDS_IN_DAY
+#     copy_path = download_file_path
+#     #  logging.info(f"RAPBot has started moving the file to {output_path}")
+#     for file_name in os.listdir(copy_path):
+#         target_path = os.path.join(copy_path, file_name)
+#         if last_mod_time(target_path) > before:
+#             return file_name
 
 
 def sending_mail(subject, body_mes, mail_type):
@@ -106,40 +106,44 @@ def login_gmail(browser):
     try:
         WebDriverWait(browser, 45).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="email" and @aria-label="Email or phone"]'))).send_keys(config['Login Details']['user_name'])
         # WebDriverWait(browser, 45).until(EC.element_to_be_clickable((By.XPATH,'//input[@id="identifierId"]'))).send_keys(config['Login Details']['user_name'])
-        logging.info("Email Entered")
+        logging.info("INFO :: Email Entered")
         browser.find_element_by_xpath('//button[span="Next"]').click()
         WebDriverWait(browser, 45).until(EC.element_to_be_clickable(
             (By.XPATH, '//input[@type="password" and @aria-label="Enter your password"]'))).send_keys(config['Login Details']['password'])
-        logging.info("Password Entered")
+        logging.info("INFO :: Password Entered")
         browser.implicitly_wait(10)
         WebDriverWait(browser, 30).until(EC.element_to_be_clickable(
-            (By.XPATH, '//button[span="Next"]'))).click()
+            (By.XPATH, '//*[@id="passwordNext"]/div/button'))).click()
         browser.implicitly_wait(20)
-        logging.info("Logged in successfully")
+        logging.info("INFO :: Logged in successfully")
         validate_mail(browser)
     except exceptions.StaleElementReferenceException as se:
         print(f"Stale element exception occured : {se}")
-        logging.error(f"Stale element exception occured : {se}")
-        login_gmail(browser)
+        logging.error(f"ERROR :: Stale element exception occured : {se}")
+        # browser.quit()
+        start_program(browser)
+        # browser.get(config["Website"]["url"])
+        # login_gmail(browser)
     except Exception as e:
         print(f"Error occured in login_mail : {e}")
-        logging.error(f"Error Occured in login_mail function --------------------> {e}")
-        sending_mail("RAP Bot Error Notification",
-                     f'Error Occured in login_mail function --------------------> {e}', 'Admin')
+        logging.error(f"ERROR :: Error Occured in login_mail function --------------------> {e}")
+        browser.save_screenshot('Screeshot.png')
+        # sending_mail("RAP Bot Error Notification",
+        #              f'Error Occured in login_mail function --------------------> {e}', 'Admin')
 
 
 def download_button_click(browser, mail_val, exception_case_file=False):
     customer_type = mail_val[1]
     logging.info(
-        f"It came to download_button_click fucntion. The mail type : {customer_type} and the subject : {mail_val[0]}")
+        f"INFO :: It came to download_button_click fucntion. The mail type : {customer_type} and the subject : {mail_val[0]}")
     browser.implicitly_wait(30)
     if exception_case_file:
         logging.info(
-            f"The mail {mail_val[0]} sent at {mail_val[2]} is an exception run")
+            f"INFO :: The mail {mail_val[0]} sent at {mail_val[2]} is an exception run")
     ele_len = len(browser.find_elements_by_xpath(
         f'//div[@class="aQH"]/span[@download_url]'))
     logging.info(
-        f"No. of files attached to {mail_val[0]} {mail_val[2]} mail is : {ele_len}")
+        f"INFO :: No. of files attached to {mail_val[0]} {mail_val[2]} mail is : {ele_len}")
     print("No of files in email : ", ele_len)
     if ele_len:
         for index in range(1, ele_len+1):
@@ -162,7 +166,7 @@ def download_button_click(browser, mail_val, exception_case_file=False):
     else:
         # send mail for no document attached in mail
         logging.error(
-            f"No files are attached in {mail_val[0]} sent at {mail_val[2]}")
+            f"ERROR :: No files are attached in {mail_val[0]} sent at {mail_val[2]}")
         sending_mail('RAP Bot Error Notification',
                      f'No attachments are found in {mail_val[0]} sent on {mail_val[2]} Please do check to it', 'Bussiness')
 
@@ -177,11 +181,11 @@ def email_back_button_click(browser):
             (By.XPATH, '//div[@title="Back to Inbox" and @role="button"]'))).click()
     except Exception as e:
         logging.error(
-            "Exception occured in email_back_button_click function message : {}".format(e))
+            "ERROR :: Exception occured in email_back_button_click function message : {}".format(e))
 
 
 def validate_mail(browser):
-    logging.info("Entered Validate_mail function")
+    logging.info("INFO :: Entered Validate_mail function")
     count = 0
     WebDriverWait(browser, 30).until(EC.element_to_be_clickable(
         (By.XPATH, '//tr[contains(@class,"zA")]')))
@@ -198,9 +202,9 @@ def validate_mail(browser):
     exception_flag = [True for x in config['Exception']
                       if str(config['Exception'][x]).upper() == "ON"]
     if exception_flag:
-        logging.info(f"Exception flag status : True")
+        logging.info(f"INFO :: Exception flag status : True")
     else:
-        logging.info(f"Exception flag status : False")
+        logging.info(f"INFO :: Exception flag status : False")
     try:
         if not exception_flag:
             for ele in range(1, len(element_len)+1):
@@ -214,11 +218,11 @@ def validate_mail(browser):
                         email_back_button_click(browser)
                         print("Again back button clicked")
                     logging.info(
-                        "-----------------> Waiting in loop while loop in valide_mail()")
+                        "INFO :: -----------------> Waiting in loop while loop in valide_mail()")
                     content_page = browser.find_elements_by_xpath(
                         '//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
                 print("\nEnded loop")
-                logging.info("-----------> While loop ended")
+                logging.info("INFO :: -----------> While loop ended")
                 element = browser.find_element_by_xpath(
                     f'//tr[contains(@class,"zA")][{ele}]/td[5]/div')
                 mail_check_elemt = browser.find_element_by_xpath(
@@ -229,7 +233,7 @@ def validate_mail(browser):
                 is_customer_mail = False
 
                 current_date = convert_time_zone(datetime.now())
-                mail_recived_time = insert_time_zone(
+                mail_recived_time = convert_time_zone(
                     datetime.strptime(time_check, '%a, %b %d, %Y, %I:%M %p'))
                 subject_check = browser.find_element_by_xpath(
                     f'//tr[contains(@class,"zA")][{ele}]/td[5]/div[1]/div[1]/div[1]/span/span').text
@@ -244,7 +248,7 @@ def validate_mail(browser):
                 try:
                     if is_customer_mail and current_date.date() == mail_recived_time.date():
                         element.click()
-                        logging.info("Mail Element clicked")
+                        logging.info("INFO :: Mail Element clicked")
                         mail_element = browser.find_elements_by_xpath(
                             f'//div[@class="aQH"]/span[@download_url]')
                         vestas_limit_end_time = datetime.strptime(
@@ -267,9 +271,12 @@ def validate_mail(browser):
 
                         # suzlon daily download
                         if "suzlon" in customer_type and "daily" in subject_check.lower():
+                            print(mail_check_elemt in mail_id)
+                            print(suzlon_limit_start_time < mail_recived_time)
+                            print(suzlon_limit_end_time > mail_recived_time)
                             if mail_check_elemt and mail_check_elemt in mail_id and suzlon_limit_end_time > mail_recived_time and suzlon_limit_start_time < mail_recived_time:
                                 logging.info(
-                                    f"This mail is {customer_type} type and the subject is '{subject_check}'")
+                                    f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
                                 mail_val = [subject_check,
                                             customer_type, time_check]
                                 download_button_click(browser, mail_val)
@@ -277,7 +284,7 @@ def validate_mail(browser):
                         # suzlon weekly download
                         elif "suzlon" in customer_type and "weekly" in subject_check.lower():
                             logging.info(
-                                f"This mail is {customer_type} type and the subject is '{subject_check}'")
+                                f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
                             mail_val = [subject_check,
                                         customer_type, time_check]
                             download_button_click(browser, mail_val)
@@ -285,7 +292,7 @@ def validate_mail(browser):
                         # vestas daily download
                         elif "vestas" in customer_type:
                             if mail_recived_time < vestas_limit_end_time and mail_recived_time > vestas_limit_start_time:
-                                logging.info(f"This mail is {customer_type} type and the subject is '{subject_check}'")
+                                logging.info(f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
                                 mail_val = [subject_check,
                                             customer_type, time_check]
                                 download_button_click(browser, mail_val)
@@ -297,21 +304,20 @@ def validate_mail(browser):
                         for swf in suzlon_weekly_file:
                             read_excel_file(browser, swf, 'suzlon_weekly')
                         suzlon_weekly_file.clear()
-                        logging.info("Daily normal flow program came to and END")
+                        logging.info("INFO :: Daily normal flow program came to and END")
                         break
                 except Exception as e:
                     logging.error(
-                        f"Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check}     Error occured in validate_mail function -------> {e}")
+                        f"ERROR :: Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check}     Error occured in validate_mail function -------> {e}")
                     sending_mail("RAP Bot error mail Notification",
                                  f"Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check} \nError Occured in validate_mail function ----------------------------> {e}", "Admin")
             # check all the mail are sent properly and notify admin in case of error
-            # send_error_mail(browser,mail_tracker,today,suzlonCheckFilePath)
         else:
-            logging.info("Exception is enabled")
+            logging.info("INFO :: Exception is enabled")
             exception_case(browser)
     except Exception as e:
         logging.error(
-            f"Error has occured in validate_mail function----------------> {e}")
+            f"INFO :: Error has occured in validate_mail function----------------> {e}")
     # excel_file_path = extract_file(browser,file_saved_path)
     # read_excel_file(browser,excel_file_path)
 
@@ -321,51 +327,51 @@ def validate_mail(browser):
         #     break
 
 
-def send_error_mail(browser, mail_tracker, today, suzlonCheckFilePath):
-    for x in mail_tracker:
-        if 'suzlon' in x:
-            if len(mail_tracker[x]) < int(config['No. of Mails']['suzlon_daily']):
-                # send mail for less no of emails sent for suzlon daily
-                spi_daily_count = 0
-                kr_daily_count = 0
-                for y in mail_tracker[x]:
-                    if 'spi' in y.lower() or 'skr' in y.lower():
-                        spi_daily_count += 1
-                    elif 'k r' in y.lower():
-                        kr_daily_count += 1
-                if spi_daily_count < 2:
-                    print("SPI mail is not yet sent")
-                    sending_mail("RAP Bot notification",
-                                 "SPI mail is not yet sent")
-                    # send email for spi daily mail is not been sent
-                    pass
-                if kr_daily_count < 2:
-                    print("KR suzlone mail is not yet sent")
-                    sending_mail("RAP Bot notification",
-                                 "KR suzlone mail is not yet sent")
-                    # send email for kr daily mail is not been sent
-                    pass
-        elif 'vestas' in x:
-            if mail_tracker[x] < int(config['No. of Mails']['vestas_daily']):
-                print("Vestas daily mail is not yet sent")
-                sending_mail("RAP Bot notification",
-                             "Vestas daily mail is not yet sent")
-                # send mail for less no of emails sent for vestas daily
-                pass
-    if today.strftime('%a') == 'Fri':
-        if os.path.exists(suzlonCheckFilePath):
-            with open(suzlonCheckFilePath, "r") as suzlonVal:
-                suzlonWeekDataRead = json.loads(suzlonVal.read())
-            if int(suzlonWeekDataRead['Download']) < 2:
-                # send mail notif. for suzlon weekly not been sent
-                sending_mail("RAP Bot notification",
-                             "Suzlon weekly mail is not yet sent")
-                pass
+# def send_error_mail(browser, mail_tracker, today, suzlonCheckFilePath):
+#     for x in mail_tracker:
+#         if 'suzlon' in x:
+#             if len(mail_tracker[x]) < int(config['No. of Mails']['suzlon_daily']):
+#                 # send mail for less no of emails sent for suzlon daily
+#                 spi_daily_count = 0
+#                 kr_daily_count = 0
+#                 for y in mail_tracker[x]:
+#                     if 'spi' in y.lower() or 'skr' in y.lower():
+#                         spi_daily_count += 1
+#                     elif 'k r' in y.lower():
+#                         kr_daily_count += 1
+#                 if spi_daily_count < 2:
+#                     print("SPI mail is not yet sent")
+#                     sending_mail("RAP Bot notification",
+#                                  "SPI mail is not yet sent")
+#                     # send email for spi daily mail is not been sent
+#                     pass
+#                 if kr_daily_count < 2:
+#                     print("KR suzlone mail is not yet sent")
+#                     sending_mail("RAP Bot notification",
+#                                  "KR suzlone mail is not yet sent")
+#                     # send email for kr daily mail is not been sent
+#                     pass
+#         elif 'vestas' in x:
+#             if mail_tracker[x] < int(config['No. of Mails']['vestas_daily']):
+#                 print("Vestas daily mail is not yet sent")
+#                 sending_mail("RAP Bot notification",
+#                              "Vestas daily mail is not yet sent")
+#                 # send mail for less no of emails sent for vestas daily
+#                 pass
+#     if today.strftime('%a') == 'Fri':
+#         if os.path.exists(suzlonCheckFilePath):
+#             with open(suzlonCheckFilePath, "r") as suzlonVal:
+#                 suzlonWeekDataRead = json.loads(suzlonVal.read())
+#             if int(suzlonWeekDataRead['Download']) < 2:
+#                 # send mail notif. for suzlon weekly not been sent
+#                 sending_mail("RAP Bot notification",
+#                              "Suzlon weekly mail is not yet sent")
+#                 pass
 
 
 def exception_case(browser, customer_type=None):
     print("entered exception case")
-    logging.info("Entered exception_case fucntion")
+    logging.info("INFO :: Entered exception_case fucntion")
     if customer_type:
         exception_customer = customer_type
     else:
@@ -388,19 +394,19 @@ def exception_case(browser, customer_type=None):
             check_count = 0
             while len(content_page) != 0:
                 print("Waiting in while loop.........")
-                logging.info("Waiting in while loop............")
+                logging.info("INFO :: Waiting in while loop............")
                 check_count += 1
                 if check_count > 20:
                     email_back_button_click(browser)
                     print("Again back button clicked")
                 logging.info(
-                    "-----------------> Waiting in loop while loop in exception_case()")
+                    "INFO :: -----------------> Waiting in loop while loop in exception_case()")
                 content_page = browser.find_elements_by_xpath(
                     '//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
             email_element = browser.find_element_by_xpath(
                 f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div')
             print("Endedd while loop")
-            logging.info("--------Loop wait ended----------")
+            logging.info("INFO :: --------Loop wait ended----------")
             for company in exception_customer:
                 mail_subject = config['Subject'][company]
                 subject_val = ''
@@ -424,23 +430,23 @@ def exception_case(browser, customer_type=None):
                 print(email_index, " ", subject_check,
                       " : ", time_check, " : ", company)
                 logging.info(
-                    f"------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
+                    f"INFO :: ------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
                 is_check_mail = False
                 for x in mail_subject:
                     if x in subject_check:
                         is_check_mail = True
                         break
                 if is_check_mail:
-                    logging.info(f"Exception time : {str(mail_time[0])}")
-                    logging.info(f"Mail time : {time_check}")
+                    logging.info(f"INFO :: Exception time : {str(mail_time[0])}")
+                    logging.info(f"INFO :: Mail time : {time_check}")
                     print('-------->', mail_time[0])
                     print(mail_time[1])
                     print(time_check)
                     if mail_time[0] <= time_check and time_check <= mail_time[1]:
                         logging.info(
-                            "########## Time matched and condition of exception case matched for this mail ##########")
+                            "INFO :: ########## Time matched and condition of exception case matched for this mail ##########")
                         email_element.click()
-                        logging.info("Mail element clicked")
+                        logging.info("INFO :: Mail element clicked")
                         print("Email element CLicked")
                         mail_val = [subject_check, company, time_check]
                         download_button_click(browser, mail_val, True)
@@ -455,16 +461,16 @@ def exception_case(browser, customer_type=None):
                 print('^^^^^^^^^^', any([search_over[x] for x in search_over]))
             # End of exception run
             if not any([search_over[x] for x in search_over]):
-                logging.info("Started to process Suzlon Weekly")
+                logging.info("INFO :: Started to process Suzlon Weekly")
                 for swf in suzlon_weekly_file:
                     read_excel_file(browser, swf, 'suzlon_weekly')
                 suzlon_weekly_file.clear()
                 logging.info(
-                    "--------------- End of exception run ---------------")
+                    "INFO :: --------------- End of exception run ---------------")
                 break
         if any([search_over[x] for x in search_over]):
             logging.info(
-                "Enter neext page of gmail in exception_run() function")
+                "INFO :: Enter neext page of gmail in exception_run() function")
             next_page = browser.find_element_by_xpath(
                 f'//*[contains(@id,":i") and @data-tooltip="Older"]')
             hoverAction = ActionChains(browser)
@@ -474,13 +480,14 @@ def exception_case(browser, customer_type=None):
             exception_case(browser, [x for x in search_over if search_over[x]])
     except Exception as e:
         print(f"The exceptin occured in exception function is : {e}")
-        logging.info(f"Error has occured in exception case function : {e}")
+        sending_mail("RAP Bot error notification","Error Occured at exception_case() function : {}".format(e),'Admin')
+        logging.info(f"ERROR :: Error has occured in exception case function : {e}")
 
 
 def move_downloaded_file(browser, customer_type, file_name, exception=None):
-    logging.info("Bot came to move_downloaded_file() function")
+    logging.info("INFO :: Bot came to move_downloaded_file() function")
     if exception:
-        logging.info(f"{file_name} is downloaded as a exception run")
+        logging.info(f"INFO :: {file_name} is downloaded as a exception run")
     # dow_path = os.path.join(download_file_path,file_name)
     dow_path = download_file_path+'/'+file_name
     file_date = datetime.now().strftime("%d")
@@ -498,23 +505,31 @@ def move_downloaded_file(browser, customer_type, file_name, exception=None):
     os.makedirs(des_path+"/{}".format(customer_type), exist_ok=True)
     try:
         shutil.move(dow_path, des_path+"/{}".format(customer_type))
-        print("---> File moved")
     except Exception as e:
         print("Move file exception")
-        logging.info(f"Error occured --------------> {e}")
-    # excel_file_path = os.path.join(des_path,customer_type,file_name)
+        if 'already exists' in e.args[0].lower():
+            os.remove(dow_path)
+            logging.error(f"ERROR :: Error occured in move_downloaded_file() function Already file exist error --------------> {e}")
+        else:
+            sending_mail("RAP Bot Error notification","Error occured at move_downloaded_file() function ERROR : {}".format(e),"ADMIN")
+            logging.error(f"ERROR :: Error occured in move_downloaded_file() function --------------> {e}")
+
+    print("---> File moved")
+    logging.info("INFO :: File moved to {}/{}".format(des_path,customer_type))
     excel_file_path = des_path+"/{}/{}".format(customer_type, file_name)
     print("Destination Path: ", excel_file_path, "   ", customer_type)
-    logging.info(f"File is moved in path {excel_file_path}")
+    logging.info(f"INFO :: File is moved in path {excel_file_path}")
     print(excel_file_path)
     if 'suzlon_weekly' in customer_type.lower():
         suzlon_weekly_file.append(excel_file_path)
     else:
         read_excel_file(browser, excel_file_path, customer_type)
+    # excel_file_path = os.path.join(des_path,customer_type,file_name)
+
 
 
 def read_excel_file(browser, file_path, customer_type):
-    logging.info("Entered read_excel_file() function")
+    logging.info("INFO :: Entered read_excel_file() function")
 
     def check_valuein_reporting_layer(cursor, query_val):
         check_command = f"select * from spi_windmill_gen_daily_report where gendate='{query_val[0]}' and companyname='{query_val[1]}' and locno='{query_val[2]}';"
@@ -527,8 +542,8 @@ def read_excel_file(browser, file_path, customer_type):
         location_data = cursor.fetchall()
         location_dic = {}
         for x in location_data:
-            location_dic[x[0]] = [x[3], x[4], x[5]]
-        logging.info("Loaded data from location_master")
+            location_dic[x[0]] = [x[3], x[4], x[5], x[2]]
+        logging.info("INFO :: Loaded data from location_master")
         return location_dic
 
     def check_float_val(data):
@@ -544,11 +559,10 @@ def read_excel_file(browser, file_path, customer_type):
                                              user=config["DB Config"]["user_name"],
                                              password=config["DB Config"]["paswd"])
         if connection.is_connected():
-            logging.info("Database connection is successfull established")
+            logging.info("INFO :: Database connection is successfull established")
             cursor = connection.cursor()
             location = read_location_master(cursor)
             try:
-
                 if "suzlon_daily" in customer_type:
                     sheet_val = pd.read_excel(file_path, sheet_name=None)
                     file_name = file_path.split('/')[-1]
@@ -556,7 +570,7 @@ def read_excel_file(browser, file_path, customer_type):
                     recordInserted = []
                     for sheet_name in sheet_val:
                         if "generation" in sheet_name.lower():
-                            logging.info(f"INSERT GENERATION Data: {file_name}")
+                            logging.info(f"INFO :: INSERT GENERATION Data: {file_name}")
                             doc_val = sheet_val[sheet_name].fillna('')
                             for y in doc_val.columns:
                                 if "date" in y.lower():
@@ -604,7 +618,7 @@ def read_excel_file(browser, file_path, customer_type):
                                             columns={y: 'oprHrs'}, inplace=True)
                             try:
                                 logging.info(
-                                    "-------- > Table used : suzlon_xl_daily_hist and spi_windmill_gen_daily_report")
+                                    "INFO :: -------- > Table used : suzlon_xl_daily_hist and spi_windmill_gen_daily_report")
                                 for column_val in doc_val.iterrows():
                                     x = column_val[1]
                                     if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x.get('genDate'))) or re.match(r"\d{2}-[A-z]{3}-\d{4}", str(x.get('genDate'))):
@@ -617,31 +631,32 @@ def read_excel_file(browser, file_path, customer_type):
                                             r"\s+", '', x.get('locNo')) if "TP06" not in x.get('locNo') else "TP6"
                                         location_values = location.get(
                                             locNoVal)
-                                        db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}');"
+                                        db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
                                         cursor.execute(db_command)
                                         suzlon_daily_check = check_valuein_reporting_layer(
                                             cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
                                         if suzlon_daily_check:
-                                            recordInserted.append(db_command2)
                                             cursor.execute(db_command2)
+                                            recordInserted.append(db_command2)
                                         else:
                                             duplicate_record_sd.append(
                                                 "{} - {} - {}".format(x.get('genDate'), customerName, x.get('locNo')))
                                 print(
                                     "\n\nSuccessfully Inserted in suzlon daily\n\n")
                                 logging.info(
-                                    f"Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database")
+                                    f"INFO :: Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist Database")
                                 if recordInserted:
                                     sending_mail(
                                         f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
+                                    logging.info(f"INFO :: Data from {file_name} is Successfully Inserted into spi_windmill_gen_daily_report Database")
                             except Exception as e:
                                 logging.error(
-                                    f"An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
+                                    f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
                                 sending_mail(f"RAP Bot notification for error in Database insert",
-                                             f"GENERATION Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+                                             f"GENERATION DATA (general sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error is : {e}", "Admin")
                         elif 'break' in sheet_name.lower():
-                            logging.info(f"INSERT BREAKDOWN Data: {file_name}")
-                            df = sheet_val[x].fillna("")
+                            logging.info(f"INFO :: INSERT BREAKDOWN Data: {file_name}")
+                            df = sheet_val[sheet_name].fillna("")
                             for y in df.columns:
                                 if 'gen' in y.lower() and 'date'in y.lower():
                                     df.rename(columns={y:'genDate'},inplace=True)
@@ -667,8 +682,8 @@ def read_excel_file(browser, file_path, customer_type):
                                     # else:
                                     #     print(y)
                             except Exception as be:
-                                logging.error(f"Error occured while inserting {file_name} BREAK DOWN data : {be}")
-                                sending_mail(f"RAP Bot notification for error in Database insert",f"BREAKDOWN Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+                                logging.error(f"ERROR :: Error occured while inserting {file_name} BREAK DOWN data : {be}")
+                                sending_mail(f"RAP Bot notification for error in Database insert",f"BREAKDOWN Data(break down sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
 
                     if duplicate_record_sd:
                         sending_mail(f"RAP Bot notification for duplicate records",
@@ -680,7 +695,7 @@ def read_excel_file(browser, file_path, customer_type):
                     df_header = ""
                     file_name = file_path.split('/')[-1]
                     logging.info(
-                        "-------- > Table used : vestas_xl_daily_hist and spi_windmill_gen_daily_report")
+                        "INFO :: -------- > Table used : vestas_xl_daily_hist and spi_windmill_gen_daily_report")
                     try:
                         for sheet in df_dic:
                             df = df_dic[sheet].fillna('')
@@ -781,7 +796,7 @@ def read_excel_file(browser, file_path, customer_type):
                                         ) else "KR Wind Energy" if "kr" in x[2].lower() else ''
                                         location_values = location.get(
                                             x.get('locNo'))
-                                        db_command2 = f"INSERT into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,ebkwhday,mw,section,site,make) values('{str(x.get('genDate')).split(' ')[0]}','{customerName}','{x.get('locNo')}',{float(check_float_val(x.get('Prod')))},{check_float_val(x.get('gf'))},{check_float_val(x.get('fm'))},{float(check_float_val(x.get('sch')))},{float(check_float_val(x.get('unsch')))},{float(check_float_val(x.get('daily_gen_hr')))},{float(check_float_val(x.get('daily_run_hr')))},{ebkwhValue},{float(check_float_val(x.get('mw')))},'{location_values[1]}','{x.get('site')}','{location_values[0]}');"
+                                        db_command2 = f"INSERT into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,ebkwhday,mw,section,site,make,htno) values('{str(x.get('genDate')).split(' ')[0]}','{customerName}','{x.get('locNo')}',{float(check_float_val(x.get('Prod')))},{check_float_val(x.get('gf'))},{check_float_val(x.get('fm'))},{float(check_float_val(x.get('sch')))},{float(check_float_val(x.get('unsch')))},{float(check_float_val(x.get('daily_gen_hr')))},{float(check_float_val(x.get('daily_run_hr')))},{ebkwhValue},{float(check_float_val(x.get('mw')))},'{location_values[1]}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
                                         cursor.execute(db_command1)
                                         vestas_daily = check_valuein_reporting_layer(
                                             cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
@@ -792,21 +807,21 @@ def read_excel_file(browser, file_path, customer_type):
                                         # except Exception as dbe:
                                         #     logging.error(f"Error occured in row data insertion {dbe}")
                                 logging.info(
-                                    f"Successfully inserted {sheet} sheet data into database of {file_name}")
+                                    f"INFO :: Successfully inserted {sheet} sheet data into database of {file_name}")
                                 logging.info(
-                                    f"Data in all the sheet from {file_name} is Successfully Inserted into vestas_xl_daily_hist and spi_windmill_gen_daily_report Database")
+                                    f"INFO :: Data in all the sheet from {file_name} is Successfully Inserted into vestas_xl_daily_hist and spi_windmill_gen_daily_report Database")
                                 sending_mail(
                                     f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
                             except Exception as e:
-                                logging.info(
-                                    f"Error occured while inserting {sheet} sheet data from {file_name} file into database")
+                                logging.error(
+                                    f"ERROR :: Error occured while inserting {sheet} sheet data from {file_name} file into database")
                                 sending_mail(f"RAP Bot notification for error in Database insert",
                                              f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
                     except Exception as e:
                         print(
                             "\n\Error occured while Inserting into vestas daily\n\n")
                         logging.error(
-                            f"An error occured while inserting data from {file_name} into {e}")
+                            f"ERROR :: An error occured while inserting data from {file_name} into {e}")
                         sending_mail(f"RAP Bot notification for error in Database insert",
                                      f"Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
                         # sending_mail(f"RAP Bot Successfull data uploaded notification for {customer_type}",f"Data from {file_name} is Successfully Inserted into  Database","Bussiness")
@@ -816,7 +831,7 @@ def read_excel_file(browser, file_path, customer_type):
                         file_path, sheet_name=None, header=None)
                     file_name = file_path.split('/')[-1]
                     logging.info(
-                        "-------- > Table used : suzlon_xl_weekly_hist and spi_windmill_gen_daily_report is get updated")
+                        "INFO ::-------- > Table used : suzlon_xl_weekly_hist and spi_windmill_gen_daily_report is get updated")
                     for sheetName in excel_df:
                         df = excel_df[sheetName].fillna('')
                         for x_i, x in df.iterrows():
@@ -894,21 +909,22 @@ def read_excel_file(browser, file_path, customer_type):
                                         cursor.execute(db_command2)
                             print("\n\nSuccessfully Inserted in suzlon weekly\n\n")
                             logging.info(
-                                f"Successfully inserted {sheetName} sheet data into database of {file_name}")
+                                f"INFO ::Successfully inserted {sheetName} sheet data into database of {file_name}")
                             logging.info(
-                                f"Data from {file_name} is Successfully Inserted into suzlon_xl_weekly_hist and spi_windmill_gen_daily_report Database get updated")
+                                f"INFO ::Data from {file_name} is Successfully Inserted into suzlon_xl_weekly_hist and spi_windmill_gen_daily_report Database get updated")
                             sending_mail(
                                 f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
                         except Exception as dbe:
                             logging.error(
-                                f"Error occured while inserting {sheetName} sheet data from {file_name} file into database")
+                                f"ERROR :: Error occured while inserting {sheetName} sheet data from {file_name} file into database")
                             sending_mail(f"RAP Bot notification for error in Database insert",
                                          f"Data from {sheetName} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {dbe}", "Admin")
                 # sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database","Bussiness")
             except Exception as e:
                 print("Error is : ", e)
+                logging.error(f"ERROR :: Error occured in suzlon_weekly data insesrtion Error : {e}")
                 sending_mail(
-                    "RAP Bot notification", f"Error Occured in DB : {e} in {customer_type} and in the file {file_path}", "Admin")
+                    "RAP Bot Error notification", f"Error Occured suzlon_weekly in DB : {e} in {customer_type} and in the file {file_path}", "Admin")
 
             connection.commit()
             cursor.close()
@@ -916,38 +932,44 @@ def read_excel_file(browser, file_path, customer_type):
         print("The error is \t:", e)
 
 
+def start_program(browser):
+    browser.get(config["Website"]["url"])
+    logging.info("INFO :: Bot run starts here")
+    login_gmail(browser)
+
+
 # Bot run starts here
 # browser.implicitly_wait(30)
 bot_run = True
 bot_run_status = True
-while(bot_run):
-    config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
-    options = webdriver.ChromeOptions()
-    suzlon_weekly_file = []
-    download_file_path = os.path.join(os.path.dirname(
-        __file__), config['Path']['download_path'])
-    copy_file_path = os.path.join(os.path.dirname(
-        __file__), config['Path']['copy_path'])
-    os.makedirs(download_file_path, exist_ok=True)
-    os.makedirs(copy_file_path, exist_ok=True)
-    prefs = {"download.default_directory": download_file_path}
-    options.add_experimental_option("prefs", prefs)
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    browser = webdriver.Chrome(options=options)
-    print("Path : ", download_file_path, "  ", copy_file_path)
-    current_time = convert_time_zone(
-        datetime.now()).replace(second=0, microsecond=0)
-    bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(
-        day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
-    if current_time == bot_time:
-        sending_mail("RAP Bot started","RAP Bot started running","ADMIN")
-        logging.info(
-            'Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
-        print(bot_time)
-        browser.get(config["Website"]["url"])
-        logging.info("Bot run starts here")
-        login_gmail(browser)
-        browser.quit()
+# while(bot_run):
+config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
+options = webdriver.ChromeOptions()
+suzlon_weekly_file = []
+download_file_path = os.path.join(os.path.dirname(
+    __file__), config['Path']['download_path'])
+copy_file_path = os.path.join(os.path.dirname(
+    __file__), config['Path']['copy_path'])
+os.makedirs(download_file_path, exist_ok=True)
+os.makedirs(copy_file_path, exist_ok=True)
+prefs = {"download.default_directory": download_file_path}
+options.add_experimental_option("prefs", prefs)
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
+options.add_argument("--start-maximized")
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+browser = webdriver.Chrome(options=options)
+print("Path : ", download_file_path, "  ", copy_file_path)
+current_time = convert_time_zone(
+    datetime.now()).replace(second=0, microsecond=0)
+bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(
+    day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
+# if current_time == bot_time:
+# sending_mail("RAP Bot started","RAP Bot started running","ADMIN")
+logging.info("INFO :: Bot started to run")
+logging.info(
+    'INFO :: Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
+start_program(browser)
+print(bot_time)
+browser.quit()
