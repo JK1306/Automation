@@ -31,18 +31,6 @@ load_dotenv()
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 
-logging.basicConfig(filename='task.log',
-                    format='%(asctime)s %(message)s',
-                    filemode='a',
-                    level=logging.DEBUG)
-
-config = configparser.ConfigParser()
-# print("---------------> ENvironement Valu : ",os.environ)
-# print(os.getenv('INI_PATH'))
-# print(os.path.dirname(os.getenv('INI_PATH'))+'/task.ini')
-# print("*******",os.path.join(os.getenv('INI_PATH'), 'task.ini'))
-# config.read(os.path.join(os.getenv('INI_PATH'), 'task.ini'))
-
 
 def convert_time_zone(date_obj):
     if datetime.utcnow().hour == datetime.now().hour:
@@ -940,6 +928,13 @@ def start_program(browser):
 
 # Bot run starts here
 # browser.implicitly_wait(30)
+os.makedirs('logs',exist_ok=True)
+logging.basicConfig(filename=f'logs/spi_log_{convert_time_zone(datetime.now()).date().day}.log',
+                    format='%(asctime)s %(message)s',
+                    filemode='a',
+                    level=logging.DEBUG)
+
+config = configparser.ConfigParser()
 bot_run = True
 bot_run_status = True
 while(bot_run):
@@ -974,5 +969,5 @@ while(bot_run):
         start_program(browser)
         print(bot_time)
         browser.quit()
-        sending_mail("RAP Bot Ended","RAP Bot Completed","ADMIN")
+        sending_mail("RAP Bot Ended","RAP Bot running Completed","ADMIN")
 
