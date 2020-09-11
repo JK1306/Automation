@@ -30,9 +30,8 @@ RUN pip3 install -r /app/main_api/requirements.txt
 RUN mkdir -p /app/main_api/SPI_Group
 
 
-COPY ./SPI_Group/OLD/Bot_program /app/main_api/SPI_Group
+COPY ./SPI_Group/Bot_program /app/main_api/SPI_Group
 RUN ls
-# COPY ./.env /app/main_api/SPI_Group
 RUN ls  main_api/SPI_Group
 ENV PATH=$PATH:/app/main_api/SPI_Group/.
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata

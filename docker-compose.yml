@@ -7,7 +7,7 @@ services:
     working_dir: /app/main_api/SPI_Group
     command: ["python3", "task.py"]
     volumes:
-      - /root/Jai/Automation/SPI_Group/OLD/Bot_program/Config_file:/app/main_api/SPI_Group/Config_file
+      - /root/Jai/Automation/SPI_Group/Bot_program/Config_file:/app/main_api/SPI_Group/Config_file
 
   sql_db:
     image: mysql:5.7
