@@ -874,6 +874,9 @@ def read_excel_file(browser, file_path, customer_type):
 
             connection.commit()
             cursor.close()
+
+        else:
+            sending_mail("RAP Bot Error Notification","RAP BOT Have not estabished the connection with DB please do check the configurations","ADMIN")
     except Exception as e:
         print("The error is \t:", e)
 
@@ -897,29 +900,28 @@ bot_run = True
 bot_run_status = True
 while(bot_run):
     config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
-    print(os.path.join(os.path.dirname(__file__),'chromedriver'))
-    options = webdriver.ChromeOptions()
-    suzlon_weekly_file = []
-    download_file_path = os.path.join(os.path.dirname(
-        __file__), config['Path']['download_path'])
-    copy_file_path = os.path.join(os.path.dirname(
-        __file__), config['Path']['copy_path'])
-    os.makedirs(download_file_path, exist_ok=True)
-    os.makedirs(copy_file_path, exist_ok=True)
-    prefs = {"download.default_directory": download_file_path}
-    options.add_experimental_option("prefs", prefs)
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
-    options.add_argument("--start-maximized")
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    browser = webdriver.Chrome(options=options)
-    print("Path : ", download_file_path, "  ", copy_file_path)
-    current_time = convert_time_zone(
-        datetime.now()).replace(second=0, microsecond=0)
-    bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(
-        day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
+    current_time = convert_time_zone(datetime.now()).replace(second=0, microsecond=0)
+    bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
+    bot_run = int(config['Bot']['run'])
     if current_time == bot_time:
+        print(os.path.join(os.path.dirname(__file__),'chromedriver'))
+        options = webdriver.ChromeOptions()
+        suzlon_weekly_file = []
+        download_file_path = os.path.join(os.path.dirname(
+            __file__), config['Path']['download_path'])
+        copy_file_path = os.path.join(os.path.dirname(
+            __file__), config['Path']['copy_path'])
+        os.makedirs(download_file_path, exist_ok=True)
+        os.makedirs(copy_file_path, exist_ok=True)
+        prefs = {"download.default_directory": download_file_path}
+        options.add_experimental_option("prefs", prefs)
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
+        options.add_argument("--start-maximized")
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        browser = webdriver.Chrome(options=options)
+        print("Path : ", download_file_path, "  ", copy_file_path)        
         sending_mail("RAP Bot started","RAP Bot started running","ADMIN")
         logging.info("INFO :: Bot started to run")
         logging.info(
@@ -928,4 +930,5 @@ while(bot_run):
         print(bot_time)
         browser.quit()
         sending_mail("RAP Bot Ended","RAP Bot running Completed","ADMIN")
-
+logging.info("INFO :: BOT Stopped working")
+sending_mail("RAP BOT Stopped working","RAP Bot Config file have been changed and bot STOPPED.",'ADMIN')
