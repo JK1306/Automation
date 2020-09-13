@@ -2,25 +2,25 @@ version: "3"
 services:
   controller:
     image: power_bi
-    container_name: bot
+    container_name: SPIbot
     restart: always
     working_dir: /app/main_api/SPI_Group
     command: ["python3", "task.py"]
     volumes:
-      - /root/Jai/Automation/SPI_Group/Bot_program/Config_file:/app/main_api/SPI_Group/Config_file
+      - /root/SPI_bot/Automation/Bot_program/Config_file:/app/main_api/SPI_Group/Config_file
 
   sql_db:
     image: mysql:5.7
     restart: always
     environment:
-      MYSQL_DATABASE: "spi_group_replica"
-      MYSQL_USER: "root"
-      MYSQL_PASSWORD: "root"
-      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: "spi_group_windmill_data"
+      MYSQL_USER: "RAP@Admin"
+      MYSQL_PASSWORD: "RAPbOT@!@#"
+      MYSQL_ROOT_PASSWORD: "RAPbOT@root!@#"
     ports:
-      - "6603:3306"
+      - "6024:3306"
     expose:
-      - 6603
-    container_name: sql
+      - 6024
+    container_name: SPImysql
     volumes:
-      - /root/Jai/db:/data/db/
+      - /root/SPI_bot/db:/data/db/
