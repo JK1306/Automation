@@ -889,8 +889,8 @@ def start_program(browser):
 
 # Bot run starts here
 # browser.implicitly_wait(30)
-os.makedirs('logs',exist_ok=True)
-logging.basicConfig(filename=f'logs/spi_log_{convert_time_zone(datetime.now()).date().day}.log',
+os.makedirs(f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}',exist_ok=True)
+logging.basicConfig(filename=f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}/spi_log_{convert_time_zone(datetime.now()).date().day}.log',
                     format='%(asctime)s %(message)s',
                     filemode='a',
                     level=logging.DEBUG)
