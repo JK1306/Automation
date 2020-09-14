@@ -30,7 +30,7 @@ RUN pip3 install -r /app/main_api/requirements.txt
 RUN mkdir -p /app/main_api/SPI_Group
 
 
-COPY ./SPI_Group/Bot_program /app/main_api/SPI_Group
+COPY ./Bot_program /app/main_api/SPI_Group
 RUN ls
 RUN ls  main_api/SPI_Group
 ENV PATH=$PATH:/app/main_api/SPI_Group/.
