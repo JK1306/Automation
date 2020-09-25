@@ -156,6 +156,8 @@ def download_button_click(browser, mail_val, exception_case_file=False):
         logging.error(
             f"ERROR :: No files are attached in {mail_val[0]} sent at {mail_val[2]}")
         sending_mail('RAP Bot Error Notification',
+                     f'No attachments are found in {mail_val[0]} sent on {mail_val[2]} Please do check to it', 'Admin')        
+        sending_mail('RAP Bot Error Notification',
                      f'No attachments are found in {mail_val[0]} sent on {mail_val[2]} Please do check to it', 'Bussiness')
 
 
@@ -297,7 +299,7 @@ def validate_mail(browser):
                 except Exception as e:
                     logging.error(
                         f"ERROR :: Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check}     Error occured in validate_mail function -------> {e}")
-                    sending_mail("RAP Bot error mail Notification",
+                    sending_mail(str(config['Mail Content']['error_notify']),
                                  f"Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check} \nError Occured in validate_mail function ----------------------------> {e}", "Admin")
             # check all the mail are sent properly and notify admin in case of error
         else:
@@ -593,9 +595,10 @@ def read_excel_file(browser, file_path, customer_type):
                                     f"INFO :: Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist Database")
                                 if recordInserted:
                                     sending_mail(
-                                        f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
+                                        f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Admin")
                                     logging.info(f"INFO :: Data from {file_name} is Successfully Inserted into spi_windmill_gen_daily_report Database")
                             except Exception as e:
+                                dataBaseError.append(e)
                                 logging.error(
                                     f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
                                 sending_mail(f"RAP Bot notification for error in Database insert",
@@ -757,20 +760,21 @@ def read_excel_file(browser, file_path, customer_type):
                                 logging.info(
                                     f"INFO :: Data in all the sheet from {file_name} is Successfully Inserted into vestas_xl_daily_hist and spi_windmill_gen_daily_report Database")
                                 sending_mail(
-                                    f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
+                                    f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Admin")
                             except Exception as e:
+                                dataBaseError.append(e)
                                 logging.error(
                                     f"ERROR :: Error occured while inserting {sheet} sheet data from {file_name} file into database")
                                 sending_mail(f"RAP Bot notification for error in Database insert",
                                              f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
                     except Exception as e:
+                        dataBaseError.append(e)
                         print(
                             "\n\Error occured while Inserting into vestas daily\n\n")
                         logging.error(
                             f"ERROR :: An error occured while inserting data from {file_name} into {e}")
                         sending_mail(f"RAP Bot notification for error in Database insert",
                                      f"Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
-                        # sending_mail(f"RAP Bot Successfull data uploaded notification for {customer_type}",f"Data from {file_name} is Successfully Inserted into  Database","Bussiness")
 
                 if 'suzlon_weekly' in customer_type:
                     excel_df = pd.read_excel(
@@ -778,6 +782,7 @@ def read_excel_file(browser, file_path, customer_type):
                     file_name = file_path.split('/')[-1]
                     logging.info(
                         "INFO ::-------- > Table used : suzlon_xl_weekly_hist and spi_windmill_gen_daily_report is get updated")
+                    location_name = []
                     for sheetName in excel_df:
                         df = excel_df[sheetName].fillna('')
                         for x_i, x in df.iterrows():
@@ -858,15 +863,18 @@ def read_excel_file(browser, file_path, customer_type):
                                 f"INFO ::Successfully inserted {sheetName} sheet data into database of {file_name}")
                             logging.info(
                                 f"INFO ::Data from {file_name} is Successfully Inserted into suzlon_xl_weekly_hist and spi_windmill_gen_daily_report Database get updated")
-                            sending_mail(
-                                f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
+                            location_name.append(sheetName)
+                            # sending_mail(
+                            #     f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is and sheet name {sheetName} Successfully Inserted into  Database", "Admin")
                         except Exception as dbe:
+                            dataBaseError.append(dbe)
                             logging.error(
                                 f"ERROR :: Error occured while inserting {sheetName} sheet data from {file_name} file into database")
                             sending_mail(f"RAP Bot notification for error in Database insert",
                                          f"Data from {sheetName} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {dbe}", "Admin")
-                # sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database","Bussiness")
+                    sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database and the locations are {', '.join(location_name)}","Admin")
             except Exception as e:
+                dataBaseError.append(e)
                 print("Error is : ", e)
                 logging.error(f"ERROR :: Error occured in suzlon_weekly data insesrtion Error : {e}")
                 sending_mail(
@@ -876,9 +884,14 @@ def read_excel_file(browser, file_path, customer_type):
             cursor.close()
 
         else:
+            logging.error("ERROR :: Data base connection is not established")
+
             sending_mail("RAP Bot Error Notification","RAP BOT Have not estabished the connection with DB please do check the configurations","ADMIN")
     except Exception as e:
+        logging.error("ERROR :: Issue occured in read_excel() function")
+        dataBaseError.append(e)
         print("The error is \t:", e)
+        sending_mail("RAP Bot Error Notification","RAP BOT Have not estabished the connection with DB please do check the configurations","ADMIN")
 
 
 def start_program(browser):
@@ -889,11 +902,7 @@ def start_program(browser):
 
 # Bot run starts here
 # browser.implicitly_wait(30)
-os.makedirs(f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}',exist_ok=True)
-logging.basicConfig(filename=f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}/spi_log_{convert_time_zone(datetime.now()).date().day}.log',
-                    format='%(asctime)s %(message)s',
-                    filemode='a',
-                    level=logging.DEBUG)
+
 
 config = configparser.ConfigParser()
 bot_run = True
@@ -904,6 +913,12 @@ while(bot_run):
     bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
     bot_run = int(config['Bot']['run'])
     if current_time == bot_time:
+        os.makedirs(f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}',exist_ok=True)
+        logging.basicConfig(filename=f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}/spi_log_{convert_time_zone(datetime.now()).date().day}.log',
+                    format='%(asctime)s %(message)s',
+                    filemode='a',
+                    level=logging.DEBUG)
+        dataBaseError=[]
         print(os.path.join(os.path.dirname(__file__),'chromedriver'))
         options = webdriver.ChromeOptions()
         suzlon_weekly_file = []
@@ -923,12 +938,19 @@ while(bot_run):
         browser = webdriver.Chrome(options=options)
         print("Path : ", download_file_path, "  ", copy_file_path)        
         sending_mail("RAP Bot started","RAP Bot started running","ADMIN")
+        sending_mail("RAP Bot started","RAP Bot started running","Bussiness")
         logging.info("INFO :: Bot started to run")
         logging.info(
             'INFO :: Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
         start_program(browser)
         print(bot_time)
         browser.quit()
-        sending_mail("RAP Bot Ended","RAP Bot running Completed","ADMIN")
+        if dataBaseError:
+            sending_mail("RAP Bot Partialy Completed","Some issue occured RAP Bot have partially inserted the data RAP Admin would look after the issue",'Bussiness')
+        else:
+            sending_mail("RAP Bot Successfully Completed","RAP Bot have inserted all the data Into the Database",'Bussiness')
+
+        sending_mail("RAP Bot Completed","RAP Bot Completed","ADMIN")
+
 logging.info("INFO :: BOT Stopped working")
 sending_mail("RAP BOT Stopped working","RAP Bot Config file have been changed and bot STOPPED.",'ADMIN')
