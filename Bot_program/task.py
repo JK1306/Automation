@@ -639,6 +639,8 @@ def read_excel_file(browser, file_path, customer_type):
                                      f"Data from {file_name} file contains {str(duplicate_record_sd)} duplicate records", "Admin")
 
                 if "vestas_daily" in customer_type:
+                    success_msg = []
+                    error_msg = []
                     df_dic = pd.read_excel(
                         file_path, sheet_name=None, header=None)
                     df_header = ""
@@ -759,14 +761,18 @@ def read_excel_file(browser, file_path, customer_type):
                                     f"INFO :: Successfully inserted {sheet} sheet data into database of {file_name}")
                                 logging.info(
                                     f"INFO :: Data in all the sheet from {file_name} is Successfully Inserted into vestas_xl_daily_hist and spi_windmill_gen_daily_report Database")
-                                sending_mail(
-                                    f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Admin")
+                                success_msg.append(f"Data from {file_name} in location {sheet} Successfully Inserted into Database")
                             except Exception as e:
                                 dataBaseError.append(e)
                                 logging.error(
                                     f"ERROR :: Error occured while inserting {sheet} sheet data from {file_name} file into database")
-                                sending_mail(f"RAP Bot notification for error in Database insert",
-                                             f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+                                error_msg.append(f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}")
+                    if success_msg:
+                        success_msg = '\n* '.join(success_msg)
+                        sending_mail(f"RAPBot Successfull data uploaded notification for {customer_type}",f'{success_msg}',"ADMIN")
+                    if error_msg:
+                        error_msg = '\n* '.join(error_msg)
+                        sending_mail(f"RAPBot Notification for Error occured while inserting for {customer_type}",f'{error_msg}',"ADMIN")
                     except Exception as e:
                         dataBaseError.append(e)
                         print(
@@ -777,6 +783,8 @@ def read_excel_file(browser, file_path, customer_type):
                                      f"Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
 
                 if 'suzlon_weekly' in customer_type:
+                    success_msg = []
+                    error_msg = []
                     excel_df = pd.read_excel(
                         file_path, sheet_name=None, header=None)
                     file_name = file_path.split('/')[-1]
@@ -848,6 +856,7 @@ def read_excel_file(browser, file_path, customer_type):
                             for data_i, data in df.iterrows():
                                 if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(data.get('genDate'))):
                                     db_command1 = f"INSERT INTO suzlon_xl_weekly_hist(gendate,mw,customername,htno,locno,reading_totalimport,reading_06_09am_1,reading_06_09pm_1,reading_09_10pm_1,reading_05_06amand09_06pm_1,reading_10pm_05am_1,reading_totalexport,reading_06_09am_2,reading_06_09pm_2,reading_09_10pm_2,reading_05_06amand09_06pm_2,reading_10pm_05am_2,reading_kvarhimportlag,reading_kvarhimportlead,reading_kvarhexportlag,reading_kvarhexportlead,reading_kvahimportreading,reading_kvahexportreading,reading_powerfactor,reading_percent_kvahimport,reading_monthcumulative,calc_totalimport,calc_06_09am_1,calc_06_09pm_1,calc_09_10pm_1,calc_05_06amand09_06pm_1,calc_10pm_05am_1,calc_totalexport,calc_06_09am_2,calc_06_09pm_2,calc_09_10pm_2,calc_05_06amand09_06pm_2,calc_10pm_05am_2,calc_kvarhimportlag,calc_kvarhimportlead,calc_kvarhexportlag,calc_kvarhexportlead,calc_kvahimportreading,calc_kvahexportreading,calc_powerfactor,calc_percent_kvahimport,calc_monthcumulative) values('{str(data.get('genDate')).split(' ')[0]}',{float(check_float_val(data.get('mw')))},'{str(data.get('companyName'))}','{str(data.get('htno'))}','{str(data.get('locno'))}',{float(check_float_val(data.get('read_total_import')))},{float(check_float_val(data.get('read_6am_to_9am_1')))},{float(check_float_val(data.get('read_6pm_to_9pm_1')))},{float(check_float_val(data.get('read_9pm_to_10pm_1')))},{float(check_float_val(data.get('read_5am_to_6am_and_9am_to_6pm_1')))},{float(check_float_val(data.get('read_10pm_to_5am_1')))},{float(check_float_val(data.get('read_total_export')))},{float(check_float_val(data.get('read_6am_to_9am_2')))},{float(check_float_val(data.get('read_6pm_to_9pm_2')))},{float(check_float_val(data.get('read_9pm_to_10pm_2')))},{float(check_float_val(data.get('read_5am_to_6am_and_9am_to_6pm_2')))},{float(check_float_val(data.get('read_10pm_to_5am_2')))},{float(check_float_val(data.get('read_kvarh_import_lag')))},{float(check_float_val(data.get('read_kvarh_import_lead')))},{float(check_float_val(data.get('read_kvarh_export_lag')))},{float(check_float_val(data.get('read_kvarh_export_lead')))},{float(check_float_val(data.get('read_kvah_import_reading')))},{float(check_float_val(data.get('read_kvah_export_reading')))},{float(check_float_val(data.get('read_power_factor')))},{float(check_float_val(data.get('read_percent_kvarh_import')))},{float(check_float_val(data.get('read_month_cml')))},{float(check_float_val(data.get('calc_total_import')))},{float(check_float_val(data.get('calc_6am_to_9am_1')))},{float(check_float_val(data.get('calc_6pm_to_9pm_1')))},{float(check_float_val(data.get('calc_9pm_to_10pm_1')))},{float(check_float_val(data.get('calc_5am_to_6am_and_9am_to_6pm_1')))},{float(check_float_val(data.get('calc_10pm_to_5am_1')))},{float(check_float_val(data.get('calc_total_export')))},{float(check_float_val(data.get('calc_6am_to_9am_2')))},{float(check_float_val(data.get('calc_6pm_to_9pm_2')))},{float(check_float_val(data.get('calc_9pm_to_10pm_2')))},{float(check_float_val(data.get('calc_5am_to_6am_and_9am_to_6pm_2')))},{float(check_float_val(data.get('calc_10pm_to_5am_2')))},{float(check_float_val(data.get('calc_kvarh_import_lag')))},{float(check_float_val(data.get('calc_kvarh_import_lead')))},{float(check_float_val(data.get('calc_kvarh_export_lag')))},{float(check_float_val(data.get('calc_kvarh_export_lead')))},{float(check_float_val(data.get('calc_kvah_import_reading')))},{float(check_float_val(data.get('calc_kvah_export_reading')))},{float(check_float_val(data.get('calc_power_factor')))},{float(check_float_val(data.get('calc_percent_kvarh_import')))},{float(check_float_val(data.get('calc_month_cml')))});"
+                                    
                                     if any([str(data.get('companyName')).replace('NaT', ''), str(data.get('htno')).replace('NaT', ''), str(data.get('locno')).replace('NaT', '')]):
                                         customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', data.get('companyName')).lower() or "skr" in re.sub(r"\s+", '', data.get(
                                             'companyName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', data.get('companyName')).lower() else ''
