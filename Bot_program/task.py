@@ -7,6 +7,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 import logging
 import os
 import configparser
+import traceback
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
@@ -31,6 +32,63 @@ load_dotenv()
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 
+def data_recon(file_data,current_date):
+    def return_value(data):
+        return data if data else 0
+    logging.info("INFO :: Entered data_recon() function")
+    Udate = set()
+    mail_body = f"Data Recon of data uploaded on {current_date.strftime('%d-%m-%Y')}\n"
+    try:
+        connection = mysql.connector.connect(host=config["DB Config"]["host"],
+                                                port=config["DB Config"]["port"],
+                                                database=config["DB Config"]["database"],
+                                                user=config["DB Config"]["user_name"],
+                                                password=config["DB Config"]["paswd"])
+        if connection.is_connected():
+            logging.info("INFO :: Connection to Database is established")
+            cursor = connection.cursor()
+            for data in file_data:
+                if data.get('make') != "suzlon_weekly":
+                    Udate.add(data.get('gendate'))
+            for x in Udate:
+                check_value_daily = 0
+                for data in file_data:
+                    if data.get('gendate') == x and data.get('make') != "suzlon_weekly":
+                        check_value_daily += data.get('mckwhday')
+                cursor.execute(f"SELECT sum({'mckwhday'}) FROM spi_windmill_gen_daily_report where gendate='{x}';")
+                db_value = cursor.fetchall()
+                db_value = return_value(db_value[0][0])
+                mail_body = mail_body+f"\nData Recon for {x} daily data\n"
+                mail_body = mail_body+f"\t\t\tData from file : {check_value_daily}\n"
+                mail_body = mail_body+f"\t\t\tData from database : {db_value}\n"
+                mail_body = mail_body+f"\t\t\tThe Variance is : {check_value_daily - int(db_value)}\n"
+            logging.info("INFO :: Daily mail have been analysed")
+            check_value_weekly = []
+            # check_value_weekly = [(data.get('ebkwhday'),datetime.strptime(data.get('gendate'),'%Y-%m-%d')) for data in file_data if data.get('make') == "suzlon_weekly"]
+            for data in file_data:
+                if data.get('make') == "suzlon_weekly":
+                    print(data.get('gendate'))
+                    check_value_weekly.append((data.get('ebkwhday'),datetime.strptime(data.get('gendate'),'%Y-%m-%d')))
+            if check_value_weekly:
+                max_val = max([cw[1] for cw in check_value_weekly]).strftime('%Y-%m-%d')
+                min_val = min([cw[1] for cw in check_value_weekly]).strftime('%Y-%m-%d')
+                sum_val = [return_value(cw[0]) for cw in check_value_weekly]
+                sum_val = sum(sum_val)
+                cursor.execute(f"SELECT sum(ebkwhday) FROM spi_windmill_gen_daily_report where gendate between '{min_val}' and '{max_val}';")
+                weekly_db_value = cursor.fetchall()
+                weekly_db_value = return_value(weekly_db_value[0][0])
+                mail_body = mail_body+f"\n\nData Recon for weekly data from {min_val} to {max_val}\n"
+                mail_body = mail_body+f"\t\t\tData from file : {sum_val}\n"
+                mail_body = mail_body+f"\t\t\tData from database : {weekly_db_value}\n"
+                mail_body = mail_body+f"\t\t\tThe Variance is : {sum_val- int(weekly_db_value)}\n"
+                # min([datetime.strptime(x,'%d-%b-%y') for x in content.split('\n')])
+            logging.info("INFO :: Weekly mail have been analysed")
+        cursor.close()
+        connection.close()
+        sending_mail(f"RAPBot Recon for {', '.join(Udate)} data",mail_body,"ADMIN")
+    except Exception as e:
+        logging.error(f"ERROR :: Occured in data_recon function Error is : {e}")
+        sending_mail("RAPBot Error notification",f"Error occured in data_recon() fucntion \nerror is : {e}\ndetailed error : {traceback.print_exc()}","Admin")
 
 def convert_time_zone(date_obj):
     if datetime.utcnow().hour == datetime.now().hour:
@@ -185,7 +243,7 @@ def validate_mail(browser):
     file_path = []
     mail_tracker = {}
     # suzlonCheckFilePath = os.path.dirname(__file__)+"/suzlonCheck.json"
-    today = datetime.now()
+    current_date = convert_time_zone(datetime.now())
     for x in config['Subject']:
         for y in config['Subject'][x].split(','):
             subject_val[y] = x
@@ -198,6 +256,8 @@ def validate_mail(browser):
     try:
         if not exception_flag:
             for ele in range(1, len(element_len)+1):
+                print("Mailtrack : ",mail_tracker)
+                # print("\nFile data : ",file_data)
                 content_page = browser.find_elements_by_xpath(
                     '//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
                 check_count = 0
@@ -222,7 +282,8 @@ def validate_mail(browser):
                 mail_id = [config['Mail'][x] for x in config['Mail']]
                 is_customer_mail = False
 
-                current_date = convert_time_zone(datetime.now())
+                print("The Current date is : ",current_date)
+                logging.info(f"INFO :: Current date is {str(current_date)}")
                 mail_recived_time = convert_time_zone(
                     datetime.strptime(time_check, '%a, %b %d, %Y, %I:%M %p'))
                 subject_check = browser.find_element_by_xpath(
@@ -264,12 +325,24 @@ def validate_mail(browser):
                             print(mail_check_elemt in mail_id)
                             print(suzlon_limit_start_time < mail_recived_time)
                             print(suzlon_limit_end_time > mail_recived_time)
+                            mail_val = [subject_check, customer_type, time_check]
                             if mail_check_elemt and mail_check_elemt in mail_id and suzlon_limit_end_time > mail_recived_time and suzlon_limit_start_time < mail_recived_time:
                                 logging.info(
                                     f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
-                                mail_val = [subject_check,
-                                            customer_type, time_check]
+                                print("Suzlon_daily is selected")
+                                if 'suzlon_daily' in mail_tracker:
+                                    mail_tracker['suzlon_daily'].append(subject_check)
+                                else:
+                                    mail_tracker['suzlon_daily'] = [subject_check]
                                 download_button_click(browser, mail_val)
+                            if int(config["Bot"]["morning_mail_process"]) and suzlon_limit_start_time > mail_recived_time and not mail_tracker.get('suzlon_daily'):
+                                #  and mail_tracker.get('suzlon_daily') < config['No. of Mails']['suzlon_daily'] 
+                                if 'suzlon_daily_morning' in mail_tracker:
+                                    mail_tracker['suzlon_daily_morning'].append(subject_check)
+                                else:
+                                    mail_tracker['suzlon_daily_morning'] = [subject_check]
+                                download_button_click(browser, mail_val)
+                            
 
                         # suzlon weekly download
                         elif "suzlon" in customer_type and "weekly" in subject_check.lower():
@@ -277,6 +350,11 @@ def validate_mail(browser):
                                 f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
                             mail_val = [subject_check,
                                         customer_type, time_check]
+                            print("Suzlon_weekly is selected")
+                            if 'suzlon_weekly' in mail_tracker:
+                                mail_tracker['suzlon_weekly'].append(subject_check)
+                            else:
+                                mail_tracker['suzlon_weekly'] = [subject_check]
                             download_button_click(browser, mail_val)
 
                         # vestas daily download
@@ -285,12 +363,17 @@ def validate_mail(browser):
                                 logging.info(f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
                                 mail_val = [subject_check,
                                             customer_type, time_check]
+                                print("Vestas_daily is selected")
+                                if 'vestas_daily' in mail_tracker:
+                                    mail_tracker['vestas_daily'] += 1
+                                else:
+                                    mail_tracker['vestas_daily'] = 1
                                 download_button_click(browser, mail_val)
 
                         # email click back button
                         email_back_button_click(browser)
                     # END of normal flow program
-                    elif current_date.date() != mail_recived_time.date():
+                    elif current_date.date() > mail_recived_time.date():
                         for swf in suzlon_weekly_file:
                             read_excel_file(browser, swf, 'suzlon_weekly')
                         suzlon_weekly_file.clear()
@@ -302,19 +385,71 @@ def validate_mail(browser):
                     sending_mail(str(config['Mail Content']['error_notify']),
                                  f"Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check} \nError Occured in validate_mail function ----------------------------> {e}", "Admin")
             # check all the mail are sent properly and notify admin in case of error
+            data_recon(file_data,current_date)
+            send_error_mail(browser,mail_tracker,current_date)
         else:
             logging.info("INFO :: Exception is enabled")
             exception_case(browser)
     except Exception as e:
         logging.error(
             f"INFO :: Error has occured in validate_mail function----------------> {e}")
-    # excel_file_path = extract_file(browser,file_saved_path)
-    # read_excel_file(browser,excel_file_path)
+        sending_mail("Error RAP Bot Notification",f"Error occured in validate_mail function. \nError is {e} \n detailed error : {traceback.print_exc()}","Admin")
 
-        # except Exception as e:
-        #     print(e)
-        #     print("Except part")
-        #     break
+
+def send_error_mail(browser, mail_tracker, today, suzlonCheckFilePath=None):
+    print("Entered send_error_mail function")
+    print("Mail Tracker is : ",mail_tracker)
+    logging.info("INFO :: Entered send_error_mail() function")
+    for x in mail_tracker:
+        logging.info(f"INFO :: {x} count : {len(mail_tracker[x]) if 'suzlon' in x else mail_tracker[x]}")
+    if mail_tracker:
+        # for x in mail_tracker:
+        # Check for suzlon morning mail
+        if mail_tracker.get('suzlon_daily'):
+            if len(mail_tracker.get('suzlon_daily')) < int(config['No. of Mails']['suzlon_daily']):
+                # send mail for less no of emails sent for suzlon daily
+                spi_daily_count = 0
+                kr_daily_count = 0
+                for y in mail_tracker.get('suzlon_daily'):
+                    if 'spi' in y.lower() or 'skr' in y.lower():
+                        spi_daily_count += 1
+                    elif 'k r' in y.lower():
+                        kr_daily_count += 1
+                sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily have less no. mail of  recieved :\n SPI Power : {spi_daily_count}\n KR Wind Energy : {kr_daily_count}","ADMIN")
+        elif mail_tracker.get('suzlon_daily_morning'):
+            if len(mail_tracker.get('suzlon_daily_morning')) < int(config['No. of Mails']['suzlon_daily']):
+                # send mail for less no of emails sent for suzlon daily
+                spi_daily_count = 0
+                kr_daily_count = 0
+                for y in mail_tracker.get('suzlon_daily_morning'):
+                    if 'spi' in y.lower() or 'skr' in y.lower():
+                        spi_daily_count += 1
+                    elif 'k r' in y.lower():
+                        kr_daily_count += 1
+                sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily Evenging mail have not sent so morning mails have been processed in morning mail no. mail of  recieved :\n SPI Power : {spi_daily_count}\n KR Wind Energy : {kr_daily_count}.","ADMIN")
+            else:
+                sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily Evenging mail have not sent so morning mails have been processed without any deficiency.","ADMIN")
+        else:
+            sending_mail("ERROR RAP BOT Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily mails are not recieved at time","ADMIN")
+
+        if mail_tracker.get('vestas_daily'):
+            if mail_tracker.get('vestas_daily') < int(config['No. of Mails']['vestas_daily']):
+                print("Vestas daily mail is not yet sent")
+                sending_mail("ERROR RAP Bot notification",f"On {today.strftime('%d/%m/%Y')} Vestas daily have less no. mail of  recieved :\n Vestas : {config['No. of Mails']['vestas_daily']}","ADMIN")
+                # send mail for less no of emails sent for vestas daily
+        elif today.strftime('%a') != "Sun":
+            sending_mail("ERROR RAP BOT Notification",f"On {today.strftime('%d/%m/%Y')} Vestas daily mails are not recieved","ADMIN")
+    else:
+        sending_mail("ERROR RAP BOT Notification",f"On {today.strftime('%d/%m/%Y')} No mails have been recived.","ADMIN")
+
+    if today.strftime('%a') == 'Fri' and suzlonCheckFilePath:
+        if os.path.exists(suzlonCheckFilePath):
+            with open(suzlonCheckFilePath, "r") as suzlonVal:
+                suzlonWeekDataRead = json.loads(suzlonVal.read())
+            if int(suzlonWeekDataRead['Download']) < 2:
+                # send mail notif. for suzlon weekly not been sent
+                sending_mail("RAP Bot notification",
+                             "Suzlon weekly mail is not yet sent")
 
 
 def exception_case(browser, customer_type=None):
@@ -475,7 +610,6 @@ def move_downloaded_file(browser, customer_type, file_name, exception=None):
     # excel_file_path = os.path.join(des_path,customer_type,file_name)
 
 
-
 def read_excel_file(browser, file_path, customer_type):
     logging.info("INFO :: Entered read_excel_file() function")
 
@@ -585,6 +719,7 @@ def read_excel_file(browser, file_path, customer_type):
                                             cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
                                         if suzlon_daily_check:
                                             cursor.execute(db_command2)
+                                            file_data.append({'gendate':genDate,'mckwhday':check_float_val(x.get('genkwhDay')),'make':location_values[0]})
                                             recordInserted.append(db_command2)
                                         else:
                                             duplicate_record_sd.append(
@@ -748,13 +883,14 @@ def read_excel_file(browser, file_path, customer_type):
                                         location_values = location.get(
                                             x.get('locNo'))
                                         db_command2 = f"INSERT into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,ebkwhday,mw,section,site,make,htno) values('{str(x.get('genDate')).split(' ')[0]}','{customerName}','{x.get('locNo')}',{float(check_float_val(x.get('Prod')))},{check_float_val(x.get('gf'))},{check_float_val(x.get('fm'))},{float(check_float_val(x.get('sch')))},{float(check_float_val(x.get('unsch')))},{float(check_float_val(x.get('daily_gen_hr')))},{float(check_float_val(x.get('daily_run_hr')))},{ebkwhValue},{float(check_float_val(x.get('mw')))},'{location_values[1]}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
-                                        cursor.execute(db_command1)
                                         vestas_daily = check_valuein_reporting_layer(
                                             cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
                                         # print(vestas_daily)
                                         if vestas_daily:
                                             if any([x.get('cml_run_hr'), x.get('cml_gen_hr'), x.get('cml_g_0'), x.get('cml_gen'), x.get("cml_total_prod")]):
+                                                cursor.execute(db_command1)
                                                 cursor.execute(db_command2)
+                                                file_data.append({'gendate':str(x.get('genDate')).split(' ')[0],'mckwhday':float(check_float_val(x.get('Prod'))),'make':location_values[0]})
                                         # except Exception as dbe:
                                         #     logging.error(f"Error occured in row data insertion {dbe}")
                                 logging.info(
@@ -867,6 +1003,8 @@ def read_excel_file(browser, file_path, customer_type):
                                         db_command2 = f"update spi_windmill_gen_daily_report set ebkwhday={float(check_float_val(ebkwhday))} where gendate='{str(data.get('genDate')).split(' ')[0]}' and locno='{locNoVal}' and companyname='{customerName}';"
                                         cursor.execute(db_command1)
                                         cursor.execute(db_command2)
+                                        file_data.append({'gendate':str(data.get('genDate')).split(' ')[0],'ebkwhday':float(check_float_val(ebkwhday)),'make':'suzlon_weekly','locNoVal':locNoVal,'customerName':customerName,"FileName":file_name})
+
                             print("\n\nSuccessfully Inserted in suzlon weekly\n\n")
                             logging.info(
                                 f"INFO ::Successfully inserted {sheetName} sheet data into database of {file_name}")
@@ -896,6 +1034,7 @@ def read_excel_file(browser, file_path, customer_type):
             logging.error("ERROR :: Data base connection is not established")
 
             sending_mail("RAP Bot Error Notification","RAP BOT Have not estabished the connection with DB please do check the configurations","ADMIN")
+        connection.close()
     except Exception as e:
         logging.error("ERROR :: Issue occured in read_excel() function")
         dataBaseError.append(e)
@@ -951,6 +1090,7 @@ while(bot_run):
         logging.info("INFO :: Bot started to run")
         logging.info(
             'INFO :: Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
+        file_data = []
         start_program(browser)
         print(bot_time)
         browser.quit()
