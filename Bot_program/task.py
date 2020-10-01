@@ -214,6 +214,8 @@ def download_button_click(browser, mail_val, exception_case_file=False):
         logging.error(
             f"ERROR :: No files are attached in {mail_val[0]} sent at {mail_val[2]}")
         sending_mail('RAP Bot Error Notification',
+                     f'No attachments are found in {mail_val[0]} sent on {mail_val[2]} Please do check to it', 'Admin')        
+        sending_mail('RAP Bot Error Notification',
                      f'No attachments are found in {mail_val[0]} sent on {mail_val[2]} Please do check to it', 'Bussiness')
 
 
@@ -380,7 +382,7 @@ def validate_mail(browser):
                 except Exception as e:
                     logging.error(
                         f"ERROR :: Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check}     Error occured in validate_mail function -------> {e}")
-                    sending_mail("RAP Bot error mail Notification",
+                    sending_mail(str(config['Mail Content']['error_notify']),
                                  f"Mail : {mail_check_elemt} ,Time : {time_check} ,Subject:{subject_check} \nError Occured in validate_mail function ----------------------------> {e}", "Admin")
             # check all the mail are sent properly and notify admin in case of error
             data_recon(file_data,current_date)
@@ -728,9 +730,10 @@ def read_excel_file(browser, file_path, customer_type):
                                     f"INFO :: Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist Database")
                                 if recordInserted:
                                     sending_mail(
-                                        f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
+                                        f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Admin")
                                     logging.info(f"INFO :: Data from {file_name} is Successfully Inserted into spi_windmill_gen_daily_report Database")
                             except Exception as e:
+                                dataBaseError.append(e)
                                 logging.error(
                                     f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
                                 sending_mail(f"RAP Bot notification for error in Database insert",
@@ -771,6 +774,8 @@ def read_excel_file(browser, file_path, customer_type):
                                      f"Data from {file_name} file contains {str(duplicate_record_sd)} duplicate records", "Admin")
 
                 if "vestas_daily" in customer_type:
+                    success_msg = []
+                    error_msg = []
                     df_dic = pd.read_excel(
                         file_path, sheet_name=None, header=None)
                     df_header = ""
@@ -892,28 +897,36 @@ def read_excel_file(browser, file_path, customer_type):
                                     f"INFO :: Successfully inserted {sheet} sheet data into database of {file_name}")
                                 logging.info(
                                     f"INFO :: Data in all the sheet from {file_name} is Successfully Inserted into vestas_xl_daily_hist and spi_windmill_gen_daily_report Database")
-                                sending_mail(
-                                    f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
+                                success_msg.append(f"Data from {file_name} in location {sheet} Successfully Inserted into Database")
                             except Exception as e:
+                                dataBaseError.append(e)
                                 logging.error(
                                     f"ERROR :: Error occured while inserting {sheet} sheet data from {file_name} file into database")
-                                sending_mail(f"RAP Bot notification for error in Database insert",
-                                             f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+                                error_msg.append(f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}")
+                    if success_msg:
+                        success_msg = '\n* '.join(success_msg)
+                        sending_mail(f"RAPBot Successfull data uploaded notification for {customer_type}",f'{success_msg}',"ADMIN")
+                    if error_msg:
+                        error_msg = '\n* '.join(error_msg)
+                        sending_mail(f"RAPBot Notification for Error occured while inserting for {customer_type}",f'{error_msg}',"ADMIN")
                     except Exception as e:
+                        dataBaseError.append(e)
                         print(
                             "\n\Error occured while Inserting into vestas daily\n\n")
                         logging.error(
                             f"ERROR :: An error occured while inserting data from {file_name} into {e}")
                         sending_mail(f"RAP Bot notification for error in Database insert",
                                      f"Data from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
-                        # sending_mail(f"RAP Bot Successfull data uploaded notification for {customer_type}",f"Data from {file_name} is Successfully Inserted into  Database","Bussiness")
 
                 if 'suzlon_weekly' in customer_type:
+                    success_msg = []
+                    error_msg = []
                     excel_df = pd.read_excel(
                         file_path, sheet_name=None, header=None)
                     file_name = file_path.split('/')[-1]
                     logging.info(
                         "INFO ::-------- > Table used : suzlon_xl_weekly_hist and spi_windmill_gen_daily_report is get updated")
+                    location_name = []
                     for sheetName in excel_df:
                         df = excel_df[sheetName].fillna('')
                         for x_i, x in df.iterrows():
@@ -979,6 +992,7 @@ def read_excel_file(browser, file_path, customer_type):
                             for data_i, data in df.iterrows():
                                 if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(data.get('genDate'))):
                                     db_command1 = f"INSERT INTO suzlon_xl_weekly_hist(gendate,mw,customername,htno,locno,reading_totalimport,reading_06_09am_1,reading_06_09pm_1,reading_09_10pm_1,reading_05_06amand09_06pm_1,reading_10pm_05am_1,reading_totalexport,reading_06_09am_2,reading_06_09pm_2,reading_09_10pm_2,reading_05_06amand09_06pm_2,reading_10pm_05am_2,reading_kvarhimportlag,reading_kvarhimportlead,reading_kvarhexportlag,reading_kvarhexportlead,reading_kvahimportreading,reading_kvahexportreading,reading_powerfactor,reading_percent_kvahimport,reading_monthcumulative,calc_totalimport,calc_06_09am_1,calc_06_09pm_1,calc_09_10pm_1,calc_05_06amand09_06pm_1,calc_10pm_05am_1,calc_totalexport,calc_06_09am_2,calc_06_09pm_2,calc_09_10pm_2,calc_05_06amand09_06pm_2,calc_10pm_05am_2,calc_kvarhimportlag,calc_kvarhimportlead,calc_kvarhexportlag,calc_kvarhexportlead,calc_kvahimportreading,calc_kvahexportreading,calc_powerfactor,calc_percent_kvahimport,calc_monthcumulative) values('{str(data.get('genDate')).split(' ')[0]}',{float(check_float_val(data.get('mw')))},'{str(data.get('companyName'))}','{str(data.get('htno'))}','{str(data.get('locno'))}',{float(check_float_val(data.get('read_total_import')))},{float(check_float_val(data.get('read_6am_to_9am_1')))},{float(check_float_val(data.get('read_6pm_to_9pm_1')))},{float(check_float_val(data.get('read_9pm_to_10pm_1')))},{float(check_float_val(data.get('read_5am_to_6am_and_9am_to_6pm_1')))},{float(check_float_val(data.get('read_10pm_to_5am_1')))},{float(check_float_val(data.get('read_total_export')))},{float(check_float_val(data.get('read_6am_to_9am_2')))},{float(check_float_val(data.get('read_6pm_to_9pm_2')))},{float(check_float_val(data.get('read_9pm_to_10pm_2')))},{float(check_float_val(data.get('read_5am_to_6am_and_9am_to_6pm_2')))},{float(check_float_val(data.get('read_10pm_to_5am_2')))},{float(check_float_val(data.get('read_kvarh_import_lag')))},{float(check_float_val(data.get('read_kvarh_import_lead')))},{float(check_float_val(data.get('read_kvarh_export_lag')))},{float(check_float_val(data.get('read_kvarh_export_lead')))},{float(check_float_val(data.get('read_kvah_import_reading')))},{float(check_float_val(data.get('read_kvah_export_reading')))},{float(check_float_val(data.get('read_power_factor')))},{float(check_float_val(data.get('read_percent_kvarh_import')))},{float(check_float_val(data.get('read_month_cml')))},{float(check_float_val(data.get('calc_total_import')))},{float(check_float_val(data.get('calc_6am_to_9am_1')))},{float(check_float_val(data.get('calc_6pm_to_9pm_1')))},{float(check_float_val(data.get('calc_9pm_to_10pm_1')))},{float(check_float_val(data.get('calc_5am_to_6am_and_9am_to_6pm_1')))},{float(check_float_val(data.get('calc_10pm_to_5am_1')))},{float(check_float_val(data.get('calc_total_export')))},{float(check_float_val(data.get('calc_6am_to_9am_2')))},{float(check_float_val(data.get('calc_6pm_to_9pm_2')))},{float(check_float_val(data.get('calc_9pm_to_10pm_2')))},{float(check_float_val(data.get('calc_5am_to_6am_and_9am_to_6pm_2')))},{float(check_float_val(data.get('calc_10pm_to_5am_2')))},{float(check_float_val(data.get('calc_kvarh_import_lag')))},{float(check_float_val(data.get('calc_kvarh_import_lead')))},{float(check_float_val(data.get('calc_kvarh_export_lag')))},{float(check_float_val(data.get('calc_kvarh_export_lead')))},{float(check_float_val(data.get('calc_kvah_import_reading')))},{float(check_float_val(data.get('calc_kvah_export_reading')))},{float(check_float_val(data.get('calc_power_factor')))},{float(check_float_val(data.get('calc_percent_kvarh_import')))},{float(check_float_val(data.get('calc_month_cml')))});"
+                                    
                                     if any([str(data.get('companyName')).replace('NaT', ''), str(data.get('htno')).replace('NaT', ''), str(data.get('locno')).replace('NaT', '')]):
                                         customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', data.get('companyName')).lower() or "skr" in re.sub(r"\s+", '', data.get(
                                             'companyName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', data.get('companyName')).lower() else ''
@@ -996,15 +1010,18 @@ def read_excel_file(browser, file_path, customer_type):
                                 f"INFO ::Successfully inserted {sheetName} sheet data into database of {file_name}")
                             logging.info(
                                 f"INFO ::Data from {file_name} is Successfully Inserted into suzlon_xl_weekly_hist and spi_windmill_gen_daily_report Database get updated")
-                            sending_mail(
-                                f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Bussiness")
+                            location_name.append(sheetName)
+                            # sending_mail(
+                            #     f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is and sheet name {sheetName} Successfully Inserted into  Database", "Admin")
                         except Exception as dbe:
+                            dataBaseError.append(dbe)
                             logging.error(
                                 f"ERROR :: Error occured while inserting {sheetName} sheet data from {file_name} file into database")
                             sending_mail(f"RAP Bot notification for error in Database insert",
                                          f"Data from {sheetName} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {dbe}", "Admin")
-                # sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database","Bussiness")
+                    sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database and the locations are {', '.join(location_name)}","Admin")
             except Exception as e:
+                dataBaseError.append(e)
                 print("Error is : ", e)
                 logging.error(f"ERROR :: Error occured in suzlon_weekly data insesrtion Error : {e}")
                 sending_mail(
@@ -1014,10 +1031,15 @@ def read_excel_file(browser, file_path, customer_type):
             cursor.close()
 
         else:
+            logging.error("ERROR :: Data base connection is not established")
+
             sending_mail("RAP Bot Error Notification","RAP BOT Have not estabished the connection with DB please do check the configurations","ADMIN")
         connection.close()
     except Exception as e:
+        logging.error("ERROR :: Issue occured in read_excel() function")
+        dataBaseError.append(e)
         print("The error is \t:", e)
+        sending_mail("RAP Bot Error Notification","RAP BOT Have not estabished the connection with DB please do check the configurations","ADMIN")
 
 
 def start_program(browser):
@@ -1033,44 +1055,51 @@ def start_program(browser):
 config = configparser.ConfigParser()
 bot_run = True
 bot_run_status = True
-# while(bot_run):
-config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
-current_time = convert_time_zone(datetime.now()).replace(second=0, microsecond=0)
-bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
-bot_run = int(config['Bot']['run'])
-    # if current_time == bot_time:
-os.makedirs(f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}',exist_ok=True)
-logging.basicConfig(filename=f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}/spi_log_{convert_time_zone(datetime.now()).date().day}.log',
+while(bot_run):
+    config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
+    current_time = convert_time_zone(datetime.now()).replace(second=0, microsecond=0)
+    bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
+    bot_run = int(config['Bot']['run'])
+    if current_time == bot_time:
+        os.makedirs(f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}',exist_ok=True)
+        logging.basicConfig(filename=f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}/spi_log_{convert_time_zone(datetime.now()).date().day}.log',
                     format='%(asctime)s %(message)s',
                     filemode='a',
                     level=logging.DEBUG)
-print(os.path.join(os.path.dirname(__file__),'chromedriver'))
-options = webdriver.ChromeOptions()
-suzlon_weekly_file = []
-download_file_path = os.path.join(os.path.dirname(
-    __file__), config['Path']['download_path'])
-copy_file_path = os.path.join(os.path.dirname(
-    __file__), config['Path']['copy_path'])
-os.makedirs(download_file_path, exist_ok=True)
-os.makedirs(copy_file_path, exist_ok=True)
-prefs = {"download.default_directory": download_file_path}
-options.add_experimental_option("prefs", prefs)
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
-options.add_argument("--start-maximized")
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-browser = webdriver.Chrome(options=options)
-print("Path : ", download_file_path, "  ", copy_file_path)        
-sending_mail("RAP Bot started","RAP Bot started running","ADMIN")
-logging.info("INFO :: Bot started to run")
-logging.info(
-    'INFO :: Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
-file_data = []
-start_program(browser)
-browser.quit()
+        dataBaseError=[]
+        print(os.path.join(os.path.dirname(__file__),'chromedriver'))
+        options = webdriver.ChromeOptions()
+        suzlon_weekly_file = []
+        download_file_path = os.path.join(os.path.dirname(
+            __file__), config['Path']['download_path'])
+        copy_file_path = os.path.join(os.path.dirname(
+            __file__), config['Path']['copy_path'])
+        os.makedirs(download_file_path, exist_ok=True)
+        os.makedirs(copy_file_path, exist_ok=True)
+        prefs = {"download.default_directory": download_file_path}
+        options.add_experimental_option("prefs", prefs)
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.39 Safari/537.36")
+        options.add_argument("--start-maximized")
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        browser = webdriver.Chrome(options=options)
+        print("Path : ", download_file_path, "  ", copy_file_path)        
+        sending_mail("RAP Bot started","RAP Bot started running","ADMIN")
+        sending_mail("RAP Bot started","RAP Bot started running","Bussiness")
+        logging.info("INFO :: Bot started to run")
+        logging.info(
+            'INFO :: Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
+        file_data = []
+        start_program(browser)
+        print(bot_time)
+        browser.quit()
+        if dataBaseError:
+            sending_mail("RAP Bot Partialy Completed","Some issue occured RAP Bot have partially inserted the data RAP Admin would look after the issue",'Bussiness')
+        else:
+            sending_mail("RAP Bot Successfully Completed","RAP Bot have inserted all the data Into the Database",'Bussiness')
 
-sending_mail("RAP Bot Completed Successfully","RAP Bot have successfully Completed","ADMIN")
+        sending_mail("RAP Bot Completed","RAP Bot Completed","ADMIN")
 
 logging.info("INFO :: BOT Stopped working")
 sending_mail("RAP BOT Stopped working","RAP Bot Config file have been changed and bot STOPPED.",'ADMIN')
