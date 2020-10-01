@@ -61,7 +61,7 @@ def data_recon(file_data,current_date):
                 mail_body = mail_body+f"\nData Recon for {x} daily data\n"
                 mail_body = mail_body+f"\t\t\tData from file : {check_value_daily}\n"
                 mail_body = mail_body+f"\t\t\tData from database : {db_value}\n"
-                mail_body = mail_body+f"\t\t\tThe Variance is : {check_value_daily - int(db_value)}\n"
+                mail_body = mail_body+f"\t\t\tThe Variance is : {abs(check_value_daily - int(db_value))}\n"
             logging.info("INFO :: Daily mail have been analysed")
             check_value_weekly = []
             # check_value_weekly = [(data.get('ebkwhday'),datetime.strptime(data.get('gendate'),'%Y-%m-%d')) for data in file_data if data.get('make') == "suzlon_weekly"]
@@ -134,7 +134,7 @@ def sending_mail(subject, body_mes, mail_type):
 
     # msg['Subject'] = "Choice Reports RAPBot notification"
     msg['Subject'] = subject
-    body = f'{body_mes}'
+    body = body_mes.encode("utf_8").decode("unicode_escape")
     msg.attach(MIMEText(body, 'plain'))
     # put your relevant SMTP here
     server = smtplib.SMTP('smtp.gmail.com', '587')
@@ -893,22 +893,20 @@ def read_excel_file(browser, file_path, customer_type):
                                                 file_data.append({'gendate':str(x.get('genDate')).split(' ')[0],'mckwhday':float(check_float_val(x.get('Prod'))),'make':location_values[0]})
                                         # except Exception as dbe:
                                         #     logging.error(f"Error occured in row data insertion {dbe}")
-                                logging.info(
-                                    f"INFO :: Successfully inserted {sheet} sheet data into database of {file_name}")
+                                logging.info(f"INFO :: Successfully inserted {sheet} sheet data into database of {file_name}")
                                 logging.info(
                                     f"INFO :: Data in all the sheet from {file_name} is Successfully Inserted into vestas_xl_daily_hist and spi_windmill_gen_daily_report Database")
                                 success_msg.append(f"Data from {file_name} in location {sheet} Successfully Inserted into Database")
                             except Exception as e:
                                 dataBaseError.append(e)
-                                logging.error(
-                                    f"ERROR :: Error occured while inserting {sheet} sheet data from {file_name} file into database")
+                                logging.error(f"ERROR :: Error occured while inserting {sheet} sheet data from {file_name} file into database")
                                 error_msg.append(f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}")
-                    if success_msg:
-                        success_msg = '\n* '.join(success_msg)
-                        sending_mail(f"RAPBot Successfull data uploaded notification for {customer_type}",f'{success_msg}',"ADMIN")
-                    if error_msg:
-                        error_msg = '\n* '.join(error_msg)
-                        sending_mail(f"RAPBot Notification for Error occured while inserting for {customer_type}",f'{error_msg}',"ADMIN")
+                        if success_msg:
+                            success_msg = '\n* '.join(success_msg)
+                            sending_mail(f"RAPBot Successfull data uploaded notification for {customer_type}",f'{success_msg}',"ADMIN")
+                        if error_msg:
+                            error_msg = '\n* '.join(error_msg)
+                            sending_mail(f"RAPBot Notification for Error occured while inserting for {customer_type}",f'{error_msg}',"ADMIN")
                     except Exception as e:
                         dataBaseError.append(e)
                         print(
@@ -1004,7 +1002,7 @@ def read_excel_file(browser, file_path, customer_type):
                                         cursor.execute(db_command1)
                                         cursor.execute(db_command2)
                                         file_data.append({'gendate':str(data.get('genDate')).split(' ')[0],'ebkwhday':float(check_float_val(ebkwhday)),'make':'suzlon_weekly','locNoVal':locNoVal,'customerName':customerName,"FileName":file_name})
-
+                            success_msg.append(f"*\tData from {file_name} in location {sheetName} Successfully Inserted into Database")
                             print("\n\nSuccessfully Inserted in suzlon weekly\n\n")
                             logging.info(
                                 f"INFO ::Successfully inserted {sheetName} sheet data into database of {file_name}")
@@ -1015,11 +1013,18 @@ def read_excel_file(browser, file_path, customer_type):
                             #     f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is and sheet name {sheetName} Successfully Inserted into  Database", "Admin")
                         except Exception as dbe:
                             dataBaseError.append(dbe)
+                            error_msg.append(f"*\tData from {sheetName} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}")
                             logging.error(
                                 f"ERROR :: Error occured while inserting {sheetName} sheet data from {file_name} file into database")
-                            sending_mail(f"RAP Bot notification for error in Database insert",
-                                         f"Data from {sheetName} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {dbe}", "Admin")
-                    sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database and the locations are {', '.join(location_name)}","Admin")
+                            # sending_mail(f"RAP Bot notification for error in Database insert",
+                            #             f"Data from {sheetName} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {dbe}", "Admin")
+                    if success_msg:
+                        success_msg = '\n* '.join(success_msg)
+                        sending_mail(f"RAPBot Successfull data uploaded notification for {customer_type}",f'{success_msg}',"ADMIN")
+                    if error_msg:
+                        error_msg = '\n* '.join(error_msg)
+                        sending_mail(f"RAPBot Notification for Error occured while inserting for {customer_type}",f'{error_msg}',"ADMIN")
+                    # sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database and the locations are {', '.join(location_name)}","Admin")
             except Exception as e:
                 dataBaseError.append(e)
                 print("Error is : ", e)
