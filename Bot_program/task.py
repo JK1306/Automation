@@ -287,7 +287,7 @@ def validate_mail(browser):
                 mail_recived_time = convert_time_zone(
                     datetime.strptime(time_check, '%a, %b %d, %Y, %I:%M %p'))
                 subject_check = browser.find_element_by_xpath(
-                    f'//tr[contains(@class,"zA")][{ele}]/td[5]/div[1]/div[1]/div[1]/span/span').text
+                    f'//tr[contains(@class,"zA")][{ele}]/td[5]/div[1]/div[1]/div/span/span').text
                 print(mail_check_elemt, " : ", time_check, " : ", subject_check)
                 customer_type = ''
                 for x in subject_val:
@@ -504,7 +504,7 @@ def exception_case(browser, customer_type=None):
                     f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[8]/span').get_attribute('title')
                 print(time_check)
                 subject_check = browser.find_element_by_xpath(
-                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div[1]/div[1]/div[1]/span/span').text
+                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div[1]/div[1]/div/span/span').text
                 time_check = datetime.strptime(
                     time_check, '%a, %b %d, %Y, %I:%M %p')
                 time_check = convert_time_zone(time_check)
@@ -654,6 +654,7 @@ def read_excel_file(browser, file_path, customer_type):
                         if "generation" in sheet_name.lower():
                             logging.info(f"INFO :: INSERT GENERATION Data: {file_name}")
                             doc_val = sheet_val[sheet_name].fillna('')
+                            date_len = len(doc_val[['Gen.Date']].drop_duplicates())
                             for y in doc_val.columns:
                                 if "date" in y.lower():
                                     doc_val.rename(
@@ -704,26 +705,35 @@ def read_excel_file(browser, file_path, customer_type):
                                 for column_val in doc_val.iterrows():
                                     x = column_val[1]
                                     if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x.get('genDate'))) or re.match(r"\d{2}-[A-z]{3}-\d{4}", str(x.get('genDate'))):
-                                        genDate = str(x.get('genDate')).split(' ')[0] if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(
-                                            x[0])) else datetime.strptime(x.get('genDate'), "%d-%b-%Y").strftime("%Y-%m-%d")
-                                        db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
-                                        customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', x.get('customerName')).lower() or "skr" in re.sub(r"\s+", '', x.get(
-                                            'customerName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', x.get('customerName')).lower() else ''
-                                        locNoVal = re.sub(
-                                            r"\s+", '', x.get('locNo')) if "TP06" not in x.get('locNo') else "TP6"
-                                        location_values = location.get(
-                                            locNoVal)
-                                        db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
-                                        cursor.execute(db_command)
-                                        suzlon_daily_check = check_valuein_reporting_layer(
-                                            cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
-                                        if suzlon_daily_check:
-                                            cursor.execute(db_command2)
-                                            file_data.append({'gendate':genDate,'mckwhday':check_float_val(x.get('genkwhDay')),'make':location_values[0]})
-                                            recordInserted.append(db_command2)
+
+                                        genDate = str(x.get('genDate')).split(' ')[0] if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x[0])) else datetime.strptime(x.get('genDate'), "%d-%b-%Y").strftime("%Y-%m-%d")
+
+                                        customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', x.get('customerName')).lower() or "skr" in re.sub(r"\s+", '', x.get('customerName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', x.get('customerName')).lower() else ''
+
+                                        locNoVal = re.sub(r"\s+", '', x.get('locNo')) if "TP06" not in x.get('locNo') else "TP6"
+                                        
+                                        location_values = location.get(locNoVal)
+
+                                        if date_len == 7 and not check_valuein_reporting_layer(cursor,[genDate,x.get('customerName'),x.get('locNo')]):
+                                            db_command = f"update spi_windmill_gen_daily_report set mckwhday={float(check_float_val(x.get('genkwhDay')))} where gendate='{genDate}' and companyname='{x.get('customerName')}' and locno='{x.get('locNo')}';"
+                                            logging.info(f'Execute command : {db_command}')
+                                            cursor.execute(db_command)
                                         else:
-                                            duplicate_record_sd.append(
-                                                "{} - {} - {}".format(x.get('genDate'), customerName, x.get('locNo')))
+                                            db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
+                                            logging.info(f'Execute command : {db_command}')
+                                            db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
+                                            logging.info(f'Execute command : {db_command2}')
+                                            cursor.execute(db_command)
+                                            suzlon_daily_check = check_valuein_reporting_layer(
+                                                cursor, [genDate, customerName, x.get('locNo')])
+                                            if suzlon_daily_check:
+                                                cursor.execute(db_command2)
+                                                file_data.append({'gendate':genDate,'mckwhday':check_float_val(x.get('genkwhDay')),'make':location_values[0]})
+                                                recordInserted.append(db_command2)
+                                            else:
+                                                duplicate_record_sd.append(
+                                                    "{} - {} - {}".format(x.get('genDate'), customerName, x.get('locNo')))
+
                                 print(
                                     "\n\nSuccessfully Inserted in suzlon daily\n\n")
                                 logging.info(
@@ -1028,6 +1038,7 @@ def read_excel_file(browser, file_path, customer_type):
             except Exception as e:
                 dataBaseError.append(e)
                 print("Error is : ", e)
+                print(traceback.format_exc())
                 logging.error(f"ERROR :: Error occured in suzlon_weekly data insesrtion Error : {e}")
                 sending_mail(
                     "RAP Bot Error notification", f"Error Occured suzlon_weekly in DB : {e} in {customer_type} and in the file {file_path}", "Admin")
@@ -1063,7 +1074,10 @@ bot_run_status = True
 while(bot_run):
     config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
     current_time = convert_time_zone(datetime.now()).replace(second=0, microsecond=0)
-    bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
+    if int(config['Bot']['sat_flow_process']) and current_time.strftime('%a') == 'Sat':
+        bot_time = datetime.strptime(config['Bot']['sat_schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
+    else:
+        bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
     bot_run = int(config['Bot']['run'])
     if current_time == bot_time:
         os.makedirs(f'logs/{convert_time_zone(datetime.now()).strftime("%Y")}/{convert_time_zone(datetime.now()).strftime("%b")}',exist_ok=True)
