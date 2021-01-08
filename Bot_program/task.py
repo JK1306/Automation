@@ -27,6 +27,7 @@ from openpyxl import Workbook
 import openpyxl
 import mysql.connector
 from dotenv import load_dotenv
+import crms_data_load
 load_dotenv()
 
 for handler in logging.root.handlers[:]:
@@ -257,7 +258,6 @@ def validate_mail(browser):
         if not exception_flag:
             for ele in range(1, len(element_len)+1):
                 print("Mailtrack : ",mail_tracker)
-                # print("\nFile data : ",file_data)
                 content_page = browser.find_elements_by_xpath(
                     '//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
                 check_count = 0
@@ -287,7 +287,7 @@ def validate_mail(browser):
                 mail_recived_time = convert_time_zone(
                     datetime.strptime(time_check, '%a, %b %d, %Y, %I:%M %p'))
                 subject_check = browser.find_element_by_xpath(
-                    f'//tr[contains(@class,"zA")][{ele}]/td[5]/div[1]/div[1]/div[1]/span/span').text
+                    f'//tr[contains(@class,"zA")][{ele}]/td[5]/div[1]/div[1]/div/span/span').text
                 print(mail_check_elemt, " : ", time_check, " : ", subject_check)
                 customer_type = ''
                 for x in subject_val:
@@ -311,41 +311,40 @@ def validate_mail(browser):
                         vestas_limit_start_time = insert_time_zone(vestas_limit_start_time.replace(
                             day=current_date.day, month=current_date.month, year=current_date.year))
 
-                        suzlon_limit_end_time = datetime.strptime(
-                            config["Mail Time"]['suzlon_end_time'], '%I:%M %p')
-                        suzlon_limit_end_time = insert_time_zone(suzlon_limit_end_time.replace(
-                            day=current_date.day, month=current_date.month, year=current_date.year))
-                        suzlon_limit_start_time = datetime.strptime(
-                            config["Mail Time"]['suzlon_start_time'], '%I:%M %p')
-                        suzlon_limit_start_time = insert_time_zone(suzlon_limit_start_time.replace(
-                            day=current_date.day, month=current_date.month, year=current_date.year))
+                        # suzlon_limit_end_time = datetime.strptime(
+                        #     config["Mail Time"]['suzlon_end_time'], '%I:%M %p')
+                        # suzlon_limit_end_time = insert_time_zone(suzlon_limit_end_time.replace(
+                        #     day=current_date.day, month=current_date.month, year=current_date.year))
+                        # suzlon_limit_start_time = datetime.strptime(
+                        #     config["Mail Time"]['suzlon_start_time'], '%I:%M %p')
+                        # suzlon_limit_start_time = insert_time_zone(suzlon_limit_start_time.replace(
+                        #     day=current_date.day, month=current_date.month, year=current_date.year))
 
                         # suzlon daily download
-                        if "suzlon" in customer_type and "daily" in subject_check.lower():
-                            print(mail_check_elemt in mail_id)
-                            print(suzlon_limit_start_time < mail_recived_time)
-                            print(suzlon_limit_end_time > mail_recived_time)
-                            mail_val = [subject_check, customer_type, time_check]
-                            if mail_check_elemt and mail_check_elemt in mail_id and suzlon_limit_end_time > mail_recived_time and suzlon_limit_start_time < mail_recived_time:
-                                logging.info(
-                                    f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
-                                print("Suzlon_daily is selected")
-                                if 'suzlon_daily' in mail_tracker:
-                                    mail_tracker['suzlon_daily'].append(subject_check)
-                                else:
-                                    mail_tracker['suzlon_daily'] = [subject_check]
-                                download_button_click(browser, mail_val)
-                            if int(config["Bot"]["morning_mail_process"]) and suzlon_limit_start_time > mail_recived_time and not mail_tracker.get('suzlon_daily'):
-                                #  and mail_tracker.get('suzlon_daily') < config['No. of Mails']['suzlon_daily'] 
-                                if 'suzlon_daily_morning' in mail_tracker:
-                                    mail_tracker['suzlon_daily_morning'].append(subject_check)
-                                else:
-                                    mail_tracker['suzlon_daily_morning'] = [subject_check]
-                                download_button_click(browser, mail_val)
+                        # if "suzlon" in customer_type and "daily" in subject_check.lower():
+                        #     print(mail_check_elemt in mail_id)
+                        #     print(suzlon_limit_start_time < mail_recived_time)
+                        #     print(suzlon_limit_end_time > mail_recived_time)
+                        #     mail_val = [subject_check, customer_type, time_check]
+                        #     if mail_check_elemt and mail_check_elemt in mail_id and suzlon_limit_end_time > mail_recived_time and suzlon_limit_start_time < mail_recived_time:
+                        #         logging.info(
+                        #             f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
+                        #         print("Suzlon_daily is selected")
+                        #         if 'suzlon_daily' in mail_tracker:
+                        #             mail_tracker['suzlon_daily'].append(subject_check)
+                        #         else:
+                        #             mail_tracker['suzlon_daily'] = [subject_check]
+                        #         download_button_click(browser, mail_val)
+                        #     if int(config["Bot"]["morning_mail_process"]) and suzlon_limit_start_time > mail_recived_time and not mail_tracker.get('suzlon_daily'):
+                        #         #  and mail_tracker.get('suzlon_daily') < config['No. of Mails']['suzlon_daily'] 
+                        #         if 'suzlon_daily_morning' in mail_tracker:
+                        #             mail_tracker['suzlon_daily_morning'].append(subject_check)
+                        #         else:
+                        #             mail_tracker['suzlon_daily_morning'] = [subject_check]
+                        #         download_button_click(browser, mail_val)
                             
-
                         # suzlon weekly download
-                        elif "suzlon" in customer_type and "weekly" in subject_check.lower():
+                        if "suzlon" in customer_type and "weekly" in subject_check.lower():
                             logging.info(
                                 f"INFO :: Mail is {customer_type} type and the subject is '{subject_check}'")
                             mail_val = [subject_check,
@@ -405,33 +404,34 @@ def send_error_mail(browser, mail_tracker, today, suzlonCheckFilePath=None):
     if mail_tracker:
         # for x in mail_tracker:
         # Check for suzlon morning mail
-        if mail_tracker.get('suzlon_daily'):
-            if len(mail_tracker.get('suzlon_daily')) < int(config['No. of Mails']['suzlon_daily']):
-                # send mail for less no of emails sent for suzlon daily
-                spi_daily_count = 0
-                kr_daily_count = 0
-                for y in mail_tracker.get('suzlon_daily'):
-                    if 'spi' in y.lower() or 'skr' in y.lower():
-                        spi_daily_count += 1
-                    elif 'k r' in y.lower():
-                        kr_daily_count += 1
-                sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily have less no. mail of  recieved :\n SPI Power : {spi_daily_count}\n KR Wind Energy : {kr_daily_count}","ADMIN")
-        elif mail_tracker.get('suzlon_daily_morning'):
-            if len(mail_tracker.get('suzlon_daily_morning')) < int(config['No. of Mails']['suzlon_daily']):
-                # send mail for less no of emails sent for suzlon daily
-                spi_daily_count = 0
-                kr_daily_count = 0
-                for y in mail_tracker.get('suzlon_daily_morning'):
-                    if 'spi' in y.lower() or 'skr' in y.lower():
-                        spi_daily_count += 1
-                    elif 'k r' in y.lower():
-                        kr_daily_count += 1
-                sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily Evenging mail have not sent so morning mails have been processed in morning mail no. mail of  recieved :\n SPI Power : {spi_daily_count}\n KR Wind Energy : {kr_daily_count}.","ADMIN")
-            else:
-                sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily Evenging mail have not sent so morning mails have been processed without any deficiency.","ADMIN")
-        else:
-            sending_mail("ERROR RAP BOT Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily mails are not recieved at time","ADMIN")
-
+        # if mail_tracker.get('suzlon_daily'):
+        #     if len(mail_tracker.get('suzlon_daily')) < int(config['No. of Mails']['suzlon_daily']):
+        #         # send mail for less no of emails sent for suzlon daily
+        #         spi_daily_count = 0
+        #         kr_daily_count = 0
+        #         for y in mail_tracker.get('suzlon_daily'):
+        #             if 'spi' in y.lower() or 'skr' in y.lower():
+        #                 spi_daily_count += 1
+        #             elif 'k r' in y.lower():
+        #                 kr_daily_count += 1
+        #         sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily have less no. mail of  recieved :\n SPI Power : {spi_daily_count}\n KR Wind Energy : {kr_daily_count}","ADMIN")
+        # elif mail_tracker.get('suzlon_daily_morning'):
+        #     if len(mail_tracker.get('suzlon_daily_morning')) < int(config['No. of Mails']['suzlon_daily']):
+        #         # send mail for less no of emails sent for suzlon daily
+        #         spi_daily_count = 0
+        #         kr_daily_count = 0
+        #         for y in mail_tracker.get('suzlon_daily_morning'):
+        #             if 'spi' in y.lower() or 'skr' in y.lower():
+        #                 spi_daily_count += 1
+        #             elif 'k r' in y.lower():
+        #                 kr_daily_count += 1
+        #         sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily Evenging mail have not sent so morning mails have been processed in morning mail no. mail of  recieved :\n SPI Power : {spi_daily_count}\n KR Wind Energy : {kr_daily_count}.","ADMIN")
+        #     else:
+        #         sending_mail("ERROR RAP Bot Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily Evenging mail have not sent so morning mails have been processed without any deficiency.","ADMIN")
+        # else:
+        #     sending_mail("ERROR RAP BOT Notification",f"On {today.strftime('%d/%m/%Y')} Suzlon daily mails are not recieved at time","ADMIN")
+        # ================== Check for suzlone morning mail ===================
+        # check for vestas mail recieved
         if mail_tracker.get('vestas_daily'):
             if mail_tracker.get('vestas_daily') < int(config['No. of Mails']['vestas_daily']):
                 print("Vestas daily mail is not yet sent")
@@ -504,7 +504,7 @@ def exception_case(browser, customer_type=None):
                     f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[8]/span').get_attribute('title')
                 print(time_check)
                 subject_check = browser.find_element_by_xpath(
-                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div[1]/div[1]/div[1]/span/span').text
+                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div[1]/div[1]/div/span/span').text
                 time_check = datetime.strptime(
                     time_check, '%a, %b %d, %Y, %I:%M %p')
                 time_check = convert_time_zone(time_check)
@@ -645,133 +645,138 @@ def read_excel_file(browser, file_path, customer_type):
             cursor = connection.cursor()
             location = read_location_master(cursor)
             try:
-                if "suzlon_daily" in customer_type:
-                    sheet_val = pd.read_excel(file_path, sheet_name=None)
-                    file_name = file_path.split('/')[-1]
-                    duplicate_record_sd = []
-                    recordInserted = []
-                    for sheet_name in sheet_val:
-                        if "generation" in sheet_name.lower():
-                            logging.info(f"INFO :: INSERT GENERATION Data: {file_name}")
-                            doc_val = sheet_val[sheet_name].fillna('')
-                            for y in doc_val.columns:
-                                if "date" in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'genDate'}, inplace=True)
-                                if "customer" in y.lower() or 'company' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'customerName'}, inplace=True)
-                                if "state" in y.lower() or "site" in y.lower() or "section" in y.lower() or y.lower() == "mw" or y.lower() == "gf" or y.lower() == "fm" or y.lower() == "s" or y.lower() == "u" or y.lower() == "nor" or y.lower() == 'rna':
-                                    doc_val.rename(
-                                        columns={y: y.lower()}, inplace=True)
-                                if 'htsc' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'htscNo'}, inplace=True)
-                                if 'loc' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'locNo'}, inplace=True)
-                                if 'gen' in y.lower() and 'day' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'genkwhDay'}, inplace=True)
-                                if 'gen' in y.lower() and 'mtd' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'genkwhMtd'}, inplace=True)
-                                if 'gen' in y.lower() and 'ytd' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'genkwhYtd'}, inplace=True)
-                                if 'plf' in y.lower() and 'day' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'plfDay'}, inplace=True)
-                                if 'plf' in y.lower() and 'mtd' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'plfMtd'}, inplace=True)
-                                if 'plf' in y.lower() and 'ytd' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'plfYtd'}, inplace=True)
-                                if 'avail' in y.lower():
-                                    doc_val.rename(
-                                        columns={y: 'mcAvail'}, inplace=True)
-                                if 'hrs' in y.lower():
-                                    if 'gen' in y.lower():
-                                        doc_val.rename(
-                                            columns={y: 'genHrs'}, inplace=True)
-                                    else:
-                                        doc_val.rename(
-                                            columns={y: 'oprHrs'}, inplace=True)
-                            try:
-                                logging.info(
-                                    "INFO :: -------- > Table used : suzlon_xl_daily_hist and spi_windmill_gen_daily_report")
-                                for column_val in doc_val.iterrows():
-                                    x = column_val[1]
-                                    if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x.get('genDate'))) or re.match(r"\d{2}-[A-z]{3}-\d{4}", str(x.get('genDate'))):
-                                        genDate = str(x.get('genDate')).split(' ')[0] if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(
-                                            x[0])) else datetime.strptime(x.get('genDate'), "%d-%b-%Y").strftime("%Y-%m-%d")
-                                        db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
-                                        customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', x.get('customerName')).lower() or "skr" in re.sub(r"\s+", '', x.get(
-                                            'customerName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', x.get('customerName')).lower() else ''
-                                        locNoVal = re.sub(
-                                            r"\s+", '', x.get('locNo')) if "TP06" not in x.get('locNo') else "TP6"
-                                        location_values = location.get(
-                                            locNoVal)
-                                        db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
-                                        cursor.execute(db_command)
-                                        suzlon_daily_check = check_valuein_reporting_layer(
-                                            cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
-                                        if suzlon_daily_check:
-                                            cursor.execute(db_command2)
-                                            file_data.append({'gendate':genDate,'mckwhday':check_float_val(x.get('genkwhDay')),'make':location_values[0]})
-                                            recordInserted.append(db_command2)
-                                        else:
-                                            duplicate_record_sd.append(
-                                                "{} - {} - {}".format(x.get('genDate'), customerName, x.get('locNo')))
-                                print(
-                                    "\n\nSuccessfully Inserted in suzlon daily\n\n")
-                                logging.info(
-                                    f"INFO :: Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist Database")
-                                if recordInserted:
-                                    sending_mail(
-                                        f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Admin")
-                                    logging.info(f"INFO :: Data from {file_name} is Successfully Inserted into spi_windmill_gen_daily_report Database")
-                            except Exception as e:
-                                dataBaseError.append(e)
-                                logging.error(
-                                    f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
-                                sending_mail(f"RAP Bot notification for error in Database insert",
-                                             f"GENERATION DATA (general sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error is : {e}", "Admin")
-                        elif 'break' in sheet_name.lower():
-                            logging.info(f"INFO :: INSERT BREAKDOWN Data: {file_name}")
-                            df = sheet_val[sheet_name].fillna("")
-                            for y in df.columns:
-                                if 'gen' in y.lower() and 'date'in y.lower():
-                                    df.rename(columns={y:'genDate'},inplace=True)
-                                if "customer" in y.lower() or 'company' in y.lower():
-                                    df.rename(columns={y:'customerName'},inplace=True)
-                                if "state" in y.lower() or "site" in y.lower() or "section" in y.lower() or y.lower() == "mw":
-                                    df.rename(columns={y:y.lower()},inplace=True)
-                                if 'loc' in y.lower():
-                                    df.rename(columns={y:'locNo'},inplace=True)
-                                if 'breakdown' in y.lower() and 'remark' in y.lower():
-                                    df.rename(columns={y:'breakDownRemark'},inplace=True)
-                                if 'formula' in y.lower() and 'parameter' in y.lower():
-                                    df.rename(columns={y:'formulaParameter'},inplace=True)
-                                if 'breakdown' in y.lower() and 'hrs' in y.lower():
-                                    df.rename(columns={y:'breakDownHr'},inplace=True)
-                            try:
-                                for y_i,y in df.iterrows():
-                                    if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) or re.match(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}',str(y.get('genDate'))):
-                                        date_time_val = datetime.strptime(y.get('genDate'),'%d-%b-%Y').strftime('%Y-%m-%d') if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) else str(y.get('genDate')).split(' ')[0]
-                                        db_query = f"insert into suzlon_breakdown_data(genDate,customername,state,site,section,mw,locno,remarks,breakdownhrs,parameter) values('{date_time_val}','{y.get('customerName')}','{y.get('state')}','{y.get('site')}','{y.get('section')}',{y.get('mw')},'{y.get('locNo')}','{y.get('breakDownRemark')}',{y.get('breakDownHr')},'{y.get('formulaParameter')}')"
-                                        # print(db_query)
-                                        cursor.execute(db_query)
-                                    # else:
-                                    #     print(y)
-                            except Exception as be:
-                                logging.error(f"ERROR :: Error occured while inserting {file_name} BREAK DOWN data : {be}")
-                                sending_mail(f"RAP Bot notification for error in Database insert",f"BREAKDOWN Data(break down sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+                # if "suzlon_daily" in customer_type:
+                #     sheet_val = pd.read_excel(file_path, sheet_name=None)
+                #     file_name = file_path.split('/')[-1]
+                #     duplicate_record_sd = []
+                #     recordInserted = []
+                #     for sheet_name in sheet_val:
+                #         if "generation" in sheet_name.lower():
+                #             logging.info(f"INFO :: INSERT GENERATION Data: {file_name}")
+                #             doc_val = sheet_val[sheet_name].fillna('')
+                #             date_len = len(df[['Gen.Date']].drop_duplicates())
+                #             for y in doc_val.columns:
+                #                 if "date" in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'genDate'}, inplace=True)
+                #                 if "customer" in y.lower() or 'company' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'customerName'}, inplace=True)
+                #                 if "state" in y.lower() or "site" in y.lower() or "section" in y.lower() or y.lower() == "mw" or y.lower() == "gf" or y.lower() == "fm" or y.lower() == "s" or y.lower() == "u" or y.lower() == "nor" or y.lower() == 'rna':
+                #                     doc_val.rename(
+                #                         columns={y: y.lower()}, inplace=True)
+                #                 if 'htsc' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'htscNo'}, inplace=True)
+                #                 if 'loc' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'locNo'}, inplace=True)
+                #                 if 'gen' in y.lower() and 'day' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'genkwhDay'}, inplace=True)
+                #                 if 'gen' in y.lower() and 'mtd' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'genkwhMtd'}, inplace=True)
+                #                 if 'gen' in y.lower() and 'ytd' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'genkwhYtd'}, inplace=True)
+                #                 if 'plf' in y.lower() and 'day' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'plfDay'}, inplace=True)
+                #                 if 'plf' in y.lower() and 'mtd' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'plfMtd'}, inplace=True)
+                #                 if 'plf' in y.lower() and 'ytd' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'plfYtd'}, inplace=True)
+                #                 if 'avail' in y.lower():
+                #                     doc_val.rename(
+                #                         columns={y: 'mcAvail'}, inplace=True)
+                #                 if 'hrs' in y.lower():
+                #                     if 'gen' in y.lower():
+                #                         doc_val.rename(
+                #                             columns={y: 'genHrs'}, inplace=True)
+                #                     else:
+                #                         doc_val.rename(
+                #                             columns={y: 'oprHrs'}, inplace=True)
+                #             try:
+                #                 logging.info(
+                #                     "INFO :: -------- > Table used : suzlon_xl_daily_hist and spi_windmill_gen_daily_report")
+                #                 for column_val in doc_val.iterrows():
+                #                     x = column_val[1]
+                #                     if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x.get('genDate'))) or re.match(r"\d{2}-[A-z]{3}-\d{4}", str(x.get('genDate'))):
+                                        
+                #                         genDate = str(x.get('genDate')).split(' ')[0] if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(
+                #                             x[0])) else datetime.strptime(x.get('genDate'), "%d-%b-%Y").strftime("%Y-%m-%d")
+                                        
+                #                         customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', x.get('customerName')).lower() or "skr" in re.sub(r"\s+", '', x.get('customerName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', x.get('customerName')).lower() else ''
+                                        
+                #                         locNoVal = re.sub(r"\s+", '', x.get('locNo')) if "TP06" not in x.get('locNo') else "TP6"
+                                        
+                #                         location_values = location.get(locNoVal)
 
-                    if duplicate_record_sd:
-                        sending_mail(f"RAP Bot notification for duplicate records",
-                                     f"Data from {file_name} file contains {str(duplicate_record_sd)} duplicate records", "Admin")
+                #                         if date_len == 7 and not check_valuein_reporting_layer(cursor,[genDate,x.get('customerName'),x.get('locNo')]):
+                #                             db_command = f"update spi_windmill_gen_daily_report set mckwhday={float(check_float_val(x.get('genkwhDay')))} where gendate='{genDate}' and companyname='{x.get('customerName')}' and locno='{x.get('locNo')}';"
+                #                         else:
+                #                             db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
+                #                             db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
+                #                             cursor.execute(db_command)
+                #                             suzlon_daily_check = check_valuein_reporting_layer(cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
+                #                             if suzlon_daily_check:
+                #                                 cursor.execute(db_command2)
+                #                                 file_data.append({'gendate':genDate,'mckwhday':check_float_val(x.get('genkwhDay')),'make':location_values[0]})
+                #                                 recordInserted.append(db_command2)
+                #                             else:
+                #                                 duplicate_record_sd.append(
+                #                                     "{} - {} - {}".format(x.get('genDate'), customerName, x.get('locNo')))
+                #                 print(
+                #                     "\n\nSuccessfully Inserted in suzlon daily\n\n")
+                #                 logging.info(
+                #                     f"INFO :: Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist Database")
+                #                 if recordInserted:
+                #                     sending_mail(
+                #                         f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Admin")
+                #                     logging.info(f"INFO :: Data from {file_name} is Successfully Inserted into spi_windmill_gen_daily_report Database")
+                #             except Exception as e:
+                #                 dataBaseError.append(e)
+                #                 logging.error(
+                #                     f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
+                #                 sending_mail(f"RAP Bot notification for error in Database insert",
+                #                              f"GENERATION DATA (general sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error is : {e}", "Admin")
+                #         elif 'break' in sheet_name.lower():
+                #             logging.info(f"INFO :: INSERT BREAKDOWN Data: {file_name}")
+                #             df = sheet_val[sheet_name].fillna("")
+                #             for y in df.columns:
+                #                 if 'gen' in y.lower() and 'date'in y.lower():
+                #                     df.rename(columns={y:'genDate'},inplace=True)
+                #                 if "customer" in y.lower() or 'company' in y.lower():
+                #                     df.rename(columns={y:'customerName'},inplace=True)
+                #                 if "state" in y.lower() or "site" in y.lower() or "section" in y.lower() or y.lower() == "mw":
+                #                     df.rename(columns={y:y.lower()},inplace=True)
+                #                 if 'loc' in y.lower():
+                #                     df.rename(columns={y:'locNo'},inplace=True)
+                #                 if 'breakdown' in y.lower() and 'remark' in y.lower():
+                #                     df.rename(columns={y:'breakDownRemark'},inplace=True)
+                #                 if 'formula' in y.lower() and 'parameter' in y.lower():
+                #                     df.rename(columns={y:'formulaParameter'},inplace=True)
+                #                 if 'breakdown' in y.lower() and 'hrs' in y.lower():
+                #                     df.rename(columns={y:'breakDownHr'},inplace=True)
+                #             try:
+                #                 for y_i,y in df.iterrows():
+                #                     if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) or re.match(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}',str(y.get('genDate'))):
+                #                         date_time_val = datetime.strptime(y.get('genDate'),'%d-%b-%Y').strftime('%Y-%m-%d') if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) else str(y.get('genDate')).split(' ')[0]
+                #                         db_query = f"insert into suzlon_breakdown_data(genDate,customername,state,site,section,mw,locno,remarks,breakdownhrs,parameter) values('{date_time_val}','{y.get('customerName')}','{y.get('state')}','{y.get('site')}','{y.get('section')}',{y.get('mw')},'{y.get('locNo')}','{y.get('breakDownRemark')}',{y.get('breakDownHr')},'{y.get('formulaParameter')}')"
+                #                         # print(db_query)
+                #                         cursor.execute(db_query)
+                #                     # else:
+                #                     #     print(y)
+                #             except Exception as be:
+                #                 logging.error(f"ERROR :: Error occured while inserting {file_name} BREAK DOWN data : {be}")
+                #                 sending_mail(f"RAP Bot notification for error in Database insert",f"BREAKDOWN Data(break down sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
+
+                #     if duplicate_record_sd:
+                #         sending_mail(f"RAP Bot notification for duplicate records",
+                #                      f"Data from {file_name} file contains {str(duplicate_record_sd)} duplicate records", "Admin")
 
                 if "vestas_daily" in customer_type:
                     success_msg = []
@@ -903,12 +908,12 @@ def read_excel_file(browser, file_path, customer_type):
                                 logging.error(
                                     f"ERROR :: Error occured while inserting {sheet} sheet data from {file_name} file into database")
                                 error_msg.append(f"Data from {sheet} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {e}")
-                    if success_msg:
-                        success_msg = '\n* '.join(success_msg)
-                        sending_mail(f"RAPBot Successfull data uploaded notification for {customer_type}",f'{success_msg}',"ADMIN")
-                    if error_msg:
-                        error_msg = '\n* '.join(error_msg)
-                        sending_mail(f"RAPBot Notification for Error occured while inserting for {customer_type}",f'{error_msg}',"ADMIN")
+                        if success_msg:
+                            success_msg = '\n* '.join(success_msg)
+                            sending_mail(f"RAPBot Successfull data uploaded notification for {customer_type}",f'{success_msg}',"ADMIN")
+                        if error_msg:
+                            error_msg = '\n* '.join(error_msg)
+                            sending_mail(f"RAPBot Notification for Error occured while inserting for {customer_type}",f'{error_msg}',"ADMIN")
                     except Exception as e:
                         dataBaseError.append(e)
                         print(
@@ -1058,6 +1063,7 @@ bot_run_status = True
 while(bot_run):
     config.read(os.path.join(os.path.dirname(__file__),'Config_file' ,'task.ini'))
     current_time = convert_time_zone(datetime.now()).replace(second=0, microsecond=0)
+    # if int(config['Bot']['sat_flow_process']) and :
     bot_time = datetime.strptime(config['Bot']['schedule_time'], '%I:%M %p').replace(day=current_time.day, month=current_time.month, year=current_time.year, tzinfo=tz.gettz('Asia/Kolkata'))
     bot_run = int(config['Bot']['run'])
     if current_time == bot_time:
@@ -1091,6 +1097,7 @@ while(bot_run):
         logging.info(
             'INFO :: Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
         file_data = []
+        crms_data_load.start(browser,config,download_file_path)
         start_program(browser)
         print(bot_time)
         browser.quit()
