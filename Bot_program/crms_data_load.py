@@ -20,6 +20,20 @@ def is_page_loaded(browser):
     while result != "complete":
         result = browser.execute_script('return document.readyState;')
 
+def take_browser_ss(browser):
+    current_date = datetime.now()
+    screen_shot_path = os.path.join(os.path.dirname(__file__),'Screenshots')
+    ss_file_path = os.path.join(screen_shot_path,f'suzlon_ss_{current_date.strftime("%Y%m%d")}.png')
+    os.makedirs(screen_shot_path,exist_ok=True)
+    count = 1
+    while True:
+        if not os.path.exists(ss_file_path):
+            browser.save_screenshot(ss_file_path)
+            return ss_file_path
+        else:
+            ss_file_path = os.path.join(os.path.dirname(ss_file_path),f"suzlon_ss_{current_date.strftime('%Y%m%d')}_{count}.png")
+            count += 1
+
 def find_element_xpath(browser,xpath_str,click_flag=False,send_key=None):
     while True:
         try:
@@ -69,7 +83,7 @@ def move_file(file_name,source_path,dest_path):
     shutil.move(source_path,dest_path)
     return os.path.join(dest_path,file_name)
 
-def dashboard(browser,config,download_file_path):
+def dashboard(browser,config,download_file_path,exception_flag):
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ContentBlock"]/h2')))
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="ContentPlaceHolder1_DDLCustomer"]'))).click()
     customer_list = browser.find_elements_by_xpath('//*[@id="ContentPlaceHolder1_DDLCustomer"]/option')
@@ -95,9 +109,15 @@ def dashboard(browser,config,download_file_path):
                     current_date = datetime.now()
                     # current_date = datetime(2022,4,1)
                     current_year = current_date.year if current_date.month>=4 else current_date.year-1
-                    from_date = '01-Apr-{}'.format(str(current_year))
-                    # to_date = '01-Jan-2021'
-                    to_date = current_date.strftime('%d-%b-%Y')
+                    if exception_flag:
+                        mail_time = config['Exception Config']['suzlon_daily'].split('-')
+                        from_date = datetime.strptime(mail_time[0].strip(), '%d/%m/%Y %I:%M %p').strftime('%d-%b-%Y')
+                        to_date = datetime.strptime(mail_time[1].strip(), '%d/%m/%Y %I:%M %p').strftime('%d-%b-%Y')
+                        # mail_time = [datetime.strptime(x.strip(), '%d/%m/%Y %I:%M %p') for x in mail_time]    
+                    else:
+                        from_date = '01-Apr-{}'.format(str(current_year))
+                        # to_date = '01-Jan-2021'
+                        to_date = current_date.strftime('%d-%b-%Y')
                     browser.execute_script(f"document.getElementById('ContentPlaceHolder1_txtFromDate').value='{from_date}';")
                     browser.execute_script(f"document.getElementById('ContentPlaceHolder1_txtToDate').value='{to_date}';")
                     find_element_xpath(browser,'//*[@id="ContentPlaceHolder1_BtnViewRpt"]',click_flag=True)
@@ -111,19 +131,33 @@ def dashboard(browser,config,download_file_path):
                         time.sleep(2)
                         downloaded_file = fetch_downloaded_file(download_file_path)
                         print('-------------',downloaded_file)
-                        move_dir = os.path.join(os.path.dirname(__file__),'Suzlon_daily','Files',f'{current_date.strftime("%Y%m%d")}',customer_list[x],site_list[y],sector_list[z])
+                        move_dir = os.path.join(os.path.dirname(__file__),'Files','Suzlon_daily',f'{current_date.strftime("%Y%m%d")}',customer_list[x],site_list[y],sector_list[z])
                         os.makedirs(move_dir,exist_ok=True)
                         file_path = os.path.join(download_file_path,downloaded_file)
                         file_path = move_file(downloaded_file,file_path,move_dir)
                         db.convert_xml_to_df(file_path,config)            
             
-def login(browser,config,download_file_path):
+def login(browser,config,download_file_path,exception_flag):
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="txtUserId"]'))).send_keys(config['Bot']['login_id'])
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="txtPassword"]'))).send_keys(config['Bot']['paswd'])
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="img_login"]'))).click()
-    dashboard(browser,config,download_file_path)
+    is_page_loaded(browser)
+    try:
+        err_msg_ele = browser.find_element_by_xpath('//*[@id="lblErrorMsg"]')
+        err_msg = err_msg_ele.text
+        if err_msg:
+            print(err_msg)
+            mail_time = config['Exception Config']['suzlon_daily'].split('-')
+            from_date = datetime.strptime(mail_time[0].strip(), '%d/%m/%Y %I:%M %p').strftime('%d-%b-%Y')
+            to_date = datetime.strptime(mail_time[1].strip(), '%d/%m/%Y %I:%M %p').strftime('%d-%b-%Y')
+            print('From date : ',from_date)
+            print('To date : ',to_date)
+            ss_file_path = take_browser_ss(browser)
+            db.send_mail(config,'RAPBot CRMS Log-in Failed',f'RAPBot have noted that Error occured during Login the error msg is "{err_msg}". PLease do look after the issue',0,ss_file_path)
+    except:
+        dashboard(browser,config,download_file_path,exception_flag)
 
-def start(browser,config,download_file_path):
+def start(browser,config,download_file_path,exception_flag=None):
     try:
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
@@ -136,7 +170,7 @@ def start(browser,config,download_file_path):
         logging.debug('Started to process ftp confirm')
         browser.get(config['Bot']['url'])
         logging.debug('URL get launched in browser')
-        login(browser,config,download_file_path)
+        login(browser,config,download_file_path,exception_flag)
     except:
         error_msg = traceback.format_exc()
         print(error_msg)

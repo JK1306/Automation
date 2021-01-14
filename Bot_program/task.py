@@ -126,14 +126,11 @@ def insert_time_zone(date_obj):
 
 def sending_mail(subject, body_mes, mail_type):
     msg = MIMEMultipart()
-    msg['From'] = config["Login Details"]["user_name"]  # from address
-    # msg['To'] = "jaikishore1997@gmail.com" # to address
+    msg['From'] = config["Login Details"]["user_name"]
     if mail_type.lower() == 'bussiness':
         msg['To'] = ", ".join(config['Report']['mail'].split(","))
     elif mail_type.lower() == 'admin':
         msg['To'] = config["Admin"]["mail"]
-
-    # msg['Subject'] = "Choice Reports RAPBot notification"
     msg['Subject'] = subject
     body = f'{body_mes}'
     msg.attach(MIMEText(body, 'plain'))
@@ -142,7 +139,6 @@ def sending_mail(subject, body_mes, mail_type):
     server.ehlo()
     server.starttls()
     server.ehlo()
-    # server.login(your mail id, your password)  ### if applicable
     server.login(config["Login Details"]["user_name"],
                  config["Login Details"]["password"])
     server.send_message(msg)
@@ -458,113 +454,112 @@ def exception_case(browser, customer_type=None):
     if customer_type:
         exception_customer = customer_type
     else:
-        exception_customer = [x for x in config['Exception']
-                              if config['Exception'][x].upper() == "ON"]
-
-    # element_len = browser.find_elements_by_xpath(f'//tr[contains(@class,"zA")]')
-    WebDriverWait(browser, 30).until(EC.element_to_be_clickable(
-        (By.XPATH, '//tr[contains(@class,"zA")]')))
-    element_len = browser.find_elements_by_xpath(
-        f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")]')
-    search_over = {}
-    for type in exception_customer:
-        search_over[type] = True
-    try:
-        print("entered try block")
-        for email_index in range(1, len(element_len)+1):
-            content_page = browser.find_elements_by_xpath(
-                '//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
-            check_count = 0
-            while len(content_page) != 0:
-                print("Waiting in while loop.........")
-                logging.info("INFO :: Waiting in while loop............")
-                check_count += 1
-                if check_count > 20:
-                    email_back_button_click(browser)
-                    print("Again back button clicked")
-                logging.info(
-                    "INFO :: -----------------> Waiting in loop while loop in exception_case()")
+        exception_customer = [x for x in config['Exception'] if config['Exception'][x].upper() == "ON" and 'suzlon_daily' not in x]
+    print('Exception customer : ',exception_customer)
+    if exception_customer:
+        # element_len = browser.find_elements_by_xpath(f'//tr[contains(@class,"zA")]')
+        WebDriverWait(browser, 30).until(EC.element_to_be_clickable(
+            (By.XPATH, '//tr[contains(@class,"zA")]')))
+        element_len = browser.find_elements_by_xpath(
+            f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")]')
+        search_over = {}
+        for type in exception_customer:
+            search_over[type] = True
+        try:
+            print("entered try block")
+            for email_index in range(1, len(element_len)+1):
                 content_page = browser.find_elements_by_xpath(
                     '//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
-            email_element = browser.find_element_by_xpath(
-                f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div')
-            print("Endedd while loop")
-            logging.info("INFO :: --------Loop wait ended----------")
-            for company in exception_customer:
-                mail_subject = config['Subject'][company]
-                subject_val = ''
-                mail_subject = mail_subject.split(',')
-                # mail_time = datetime.strptime(config['Exception Config'][company],'%d/%m/%Y %I:%M %p')
-                mail_time = config['Exception Config'][company].split('-')
-                mail_time = [insert_time_zone(datetime.strptime(
-                    x.strip(), '%d/%m/%Y %I:%M %p')) for x in mail_time]
-                mail_check_elemt = browser.find_element_by_xpath(
-                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[4]/div[1]/span/span').get_attribute('email')
-                time_check = browser.find_element_by_xpath(
-                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[8]/span').get_attribute('title')
-                print(time_check)
-                subject_check = browser.find_element_by_xpath(
-                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div[1]/div[1]/div/span/span').text
-                time_check = datetime.strptime(
-                    time_check, '%a, %b %d, %Y, %I:%M %p')
-                time_check = convert_time_zone(time_check)
-                print("Converted time zone : ", time_check)
-                # if mail_subject in subject_check and time_check == mail_time:
-                print(email_index, " ", subject_check,
-                      " : ", time_check, " : ", company)
-                logging.info(
-                    f"INFO :: ------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
-                is_check_mail = False
-                for x in mail_subject:
-                    if x in subject_check:
-                        is_check_mail = True
-                        break
-                if is_check_mail:
-                    logging.info(f"INFO :: Exception time : {str(mail_time[0])}")
-                    logging.info(f"INFO :: Mail time : {time_check}")
-                    print('-------->', mail_time[0])
-                    print(mail_time[1])
-                    print(time_check)
-                    if mail_time[0] <= time_check and time_check <= mail_time[1]:
-                        logging.info(
-                            "INFO :: ########## Time matched and condition of exception case matched for this mail ##########")
-                        email_element.click()
-                        logging.info("INFO :: Mail element clicked")
-                        print("Email element CLicked")
-                        mail_val = [subject_check, company, time_check]
-                        download_button_click(browser, mail_val, True)
+                check_count = 0
+                while len(content_page) != 0:
+                    print("Waiting in while loop.........")
+                    logging.info("INFO :: Waiting in while loop............")
+                    check_count += 1
+                    if check_count > 20:
                         email_back_button_click(browser)
-                        break
-                print(mail_time[0] > time_check)
-                print(search_over)
-                print(mail_time[0])
-                print(time_check)
-                if mail_time[0] > time_check:
-                    search_over[company] = False
-                print('^^^^^^^^^^', any([search_over[x] for x in search_over]))
-            # End of exception run
-            if not any([search_over[x] for x in search_over]):
-                logging.info("INFO :: Started to process Suzlon Weekly")
-                for swf in suzlon_weekly_file:
-                    read_excel_file(browser, swf, 'suzlon_weekly')
-                suzlon_weekly_file.clear()
+                        print("Again back button clicked")
+                    logging.info(
+                        "INFO :: -----------------> Waiting in loop while loop in exception_case()")
+                    content_page = browser.find_elements_by_xpath(
+                        '//*[@id=":1"]/div/div[2]/div/table/tr/td[1]/div[2]')
+                email_element = browser.find_element_by_xpath(
+                    f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div')
+                print("Endedd while loop")
+                logging.info("INFO :: --------Loop wait ended----------")
+                for company in exception_customer:
+                    mail_subject = config['Subject'][company]
+                    subject_val = ''
+                    mail_subject = mail_subject.split(',')
+                    # mail_time = datetime.strptime(config['Exception Config'][company],'%d/%m/%Y %I:%M %p')
+                    mail_time = config['Exception Config'][company].split('-')
+                    mail_time = [insert_time_zone(datetime.strptime(x.strip(), '%d/%m/%Y %I:%M %p')) for x in mail_time]
+                    mail_check_elemt = browser.find_element_by_xpath(
+                        f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[4]/div[1]/span/span').get_attribute('email')
+                    time_check = browser.find_element_by_xpath(
+                        f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[8]/span').get_attribute('title')
+                    print(time_check)
+                    subject_check = browser.find_element_by_xpath(
+                        f'//div[@gh]/div[2]/div[1]/table/tbody/tr[contains(@class,"zA")][{email_index}]/td[5]/div[1]/div[1]/div/span/span').text
+                    time_check = datetime.strptime(
+                        time_check, '%a, %b %d, %Y, %I:%M %p')
+                    time_check = convert_time_zone(time_check)
+                    print("Converted time zone : ", time_check)
+                    # if mail_subject in subject_check and time_check == mail_time:
+                    print(email_index, " ", subject_check,
+                        " : ", time_check, " : ", company)
+                    logging.info(
+                        f"INFO :: ------------------------> In Index {email_index} This subject '{subject_check}' on time '{time_check}' belongs to {company} was in exception")
+                    is_check_mail = False
+                    for x in mail_subject:
+                        if x in subject_check:
+                            is_check_mail = True
+                            break
+                    if is_check_mail:
+                        logging.info(f"INFO :: Exception time : {str(mail_time[0])}")
+                        logging.info(f"INFO :: Mail time : {time_check}")
+                        print('-------->', mail_time[0])
+                        print(mail_time[1])
+                        print(time_check)
+                        if mail_time[0] <= time_check and time_check <= mail_time[1]:
+                            logging.info(
+                                "INFO :: ########## Time matched and condition of exception case matched for this mail ##########")
+                            email_element.click()
+                            logging.info("INFO :: Mail element clicked")
+                            print("Email element CLicked")
+                            mail_val = [subject_check, company, time_check]
+                            download_button_click(browser, mail_val, True)
+                            email_back_button_click(browser)
+                            break
+                    print(mail_time[0] > time_check)
+                    print(search_over)
+                    print(mail_time[0])
+                    print(time_check)
+                    if mail_time[0] > time_check:
+                        search_over[company] = False
+                    print('^^^^^^^^^^', any([search_over[x] for x in search_over]))
+                # End of exception run
+                if not any([search_over[x] for x in search_over]):
+                    logging.info("INFO :: Started to process Suzlon Weekly")
+                    for swf in suzlon_weekly_file:
+                        read_excel_file(browser, swf, 'suzlon_weekly')
+                    suzlon_weekly_file.clear()
+                    logging.info(
+                        "INFO :: --------------- End of exception run ---------------")
+                    break
+            if any([search_over[x] for x in search_over]):
                 logging.info(
-                    "INFO :: --------------- End of exception run ---------------")
-                break
-        if any([search_over[x] for x in search_over]):
-            logging.info(
-                "INFO :: Enter neext page of gmail in exception_run() function")
-            next_page = browser.find_element_by_xpath(
-                f'//*[contains(@id,":i") and @data-tooltip="Older"]')
-            hoverAction = ActionChains(browser)
-            hoverAction.move_to_element(next_page).perform()
-            next_page.click()
-            browser.implicitly_wait(20)
-            exception_case(browser, [x for x in search_over if search_over[x]])
-    except Exception as e:
-        print(f"The exceptin occured in exception function is : {e}")
-        sending_mail("RAP Bot error notification","Error Occured at exception_case() function : {}".format(e),'Admin')
-        logging.info(f"ERROR :: Error has occured in exception case function : {e}")
+                    "INFO :: Enter neext page of gmail in exception_run() function")
+                next_page = browser.find_element_by_xpath(
+                    f'//*[contains(@id,":i") and @data-tooltip="Older"]')
+                hoverAction = ActionChains(browser)
+                hoverAction.move_to_element(next_page).perform()
+                next_page.click()
+                browser.implicitly_wait(20)
+                exception_case(browser, [x for x in search_over if search_over[x]])
+        except Exception as e:
+            print(f"The exceptin occured in exception function is : {e}")
+            sending_mail("RAP Bot error notification","Error Occured at exception_case() function : {}".format(e),'Admin')
+            logging.info(f"ERROR :: Error has occured in exception case function : {e}")
 
 
 def move_downloaded_file(browser, customer_type, file_name, exception=None):
@@ -613,6 +608,12 @@ def move_downloaded_file(browser, customer_type, file_name, exception=None):
 def read_excel_file(browser, file_path, customer_type):
     logging.info("INFO :: Entered read_excel_file() function")
 
+    def return_ebkwh_value(cursor, query_val):
+        query = f"SELECT ebkwhday FROM spi_windmill_gen_daily_report where gendate='{query_val[0]}' and companyname='{query_val[1]}' and locno='{query_val[2]}';"
+        cursor.execute(query)
+        fetch_data = cursor.fetchall()
+        return fetch_data[0][0]
+
     def check_valuein_reporting_layer(cursor, query_val):
         check_command = f"select * from spi_windmill_gen_daily_report where gendate='{query_val[0]}' and companyname='{query_val[1]}' and locno='{query_val[2]}';"
         cursor.execute(check_command)
@@ -645,138 +646,6 @@ def read_excel_file(browser, file_path, customer_type):
             cursor = connection.cursor()
             location = read_location_master(cursor)
             try:
-                # if "suzlon_daily" in customer_type:
-                #     sheet_val = pd.read_excel(file_path, sheet_name=None)
-                #     file_name = file_path.split('/')[-1]
-                #     duplicate_record_sd = []
-                #     recordInserted = []
-                #     for sheet_name in sheet_val:
-                #         if "generation" in sheet_name.lower():
-                #             logging.info(f"INFO :: INSERT GENERATION Data: {file_name}")
-                #             doc_val = sheet_val[sheet_name].fillna('')
-                #             date_len = len(df[['Gen.Date']].drop_duplicates())
-                #             for y in doc_val.columns:
-                #                 if "date" in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'genDate'}, inplace=True)
-                #                 if "customer" in y.lower() or 'company' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'customerName'}, inplace=True)
-                #                 if "state" in y.lower() or "site" in y.lower() or "section" in y.lower() or y.lower() == "mw" or y.lower() == "gf" or y.lower() == "fm" or y.lower() == "s" or y.lower() == "u" or y.lower() == "nor" or y.lower() == 'rna':
-                #                     doc_val.rename(
-                #                         columns={y: y.lower()}, inplace=True)
-                #                 if 'htsc' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'htscNo'}, inplace=True)
-                #                 if 'loc' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'locNo'}, inplace=True)
-                #                 if 'gen' in y.lower() and 'day' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'genkwhDay'}, inplace=True)
-                #                 if 'gen' in y.lower() and 'mtd' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'genkwhMtd'}, inplace=True)
-                #                 if 'gen' in y.lower() and 'ytd' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'genkwhYtd'}, inplace=True)
-                #                 if 'plf' in y.lower() and 'day' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'plfDay'}, inplace=True)
-                #                 if 'plf' in y.lower() and 'mtd' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'plfMtd'}, inplace=True)
-                #                 if 'plf' in y.lower() and 'ytd' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'plfYtd'}, inplace=True)
-                #                 if 'avail' in y.lower():
-                #                     doc_val.rename(
-                #                         columns={y: 'mcAvail'}, inplace=True)
-                #                 if 'hrs' in y.lower():
-                #                     if 'gen' in y.lower():
-                #                         doc_val.rename(
-                #                             columns={y: 'genHrs'}, inplace=True)
-                #                     else:
-                #                         doc_val.rename(
-                #                             columns={y: 'oprHrs'}, inplace=True)
-                #             try:
-                #                 logging.info(
-                #                     "INFO :: -------- > Table used : suzlon_xl_daily_hist and spi_windmill_gen_daily_report")
-                #                 for column_val in doc_val.iterrows():
-                #                     x = column_val[1]
-                #                     if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x.get('genDate'))) or re.match(r"\d{2}-[A-z]{3}-\d{4}", str(x.get('genDate'))):
-                                        
-                #                         genDate = str(x.get('genDate')).split(' ')[0] if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(
-                #                             x[0])) else datetime.strptime(x.get('genDate'), "%d-%b-%Y").strftime("%Y-%m-%d")
-                                        
-                #                         customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', x.get('customerName')).lower() or "skr" in re.sub(r"\s+", '', x.get('customerName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', x.get('customerName')).lower() else ''
-                                        
-                #                         locNoVal = re.sub(r"\s+", '', x.get('locNo')) if "TP06" not in x.get('locNo') else "TP6"
-                                        
-                #                         location_values = location.get(locNoVal)
-
-                #                         if date_len == 7 and not check_valuein_reporting_layer(cursor,[genDate,x.get('customerName'),x.get('locNo')]):
-                #                             db_command = f"update spi_windmill_gen_daily_report set mckwhday={float(check_float_val(x.get('genkwhDay')))} where gendate='{genDate}' and companyname='{x.get('customerName')}' and locno='{x.get('locNo')}';"
-                #                         else:
-                #                             db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
-                #                             db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
-                #                             cursor.execute(db_command)
-                #                             suzlon_daily_check = check_valuein_reporting_layer(cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
-                #                             if suzlon_daily_check:
-                #                                 cursor.execute(db_command2)
-                #                                 file_data.append({'gendate':genDate,'mckwhday':check_float_val(x.get('genkwhDay')),'make':location_values[0]})
-                #                                 recordInserted.append(db_command2)
-                #                             else:
-                #                                 duplicate_record_sd.append(
-                #                                     "{} - {} - {}".format(x.get('genDate'), customerName, x.get('locNo')))
-                #                 print(
-                #                     "\n\nSuccessfully Inserted in suzlon daily\n\n")
-                #                 logging.info(
-                #                     f"INFO :: Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist Database")
-                #                 if recordInserted:
-                #                     sending_mail(
-                #                         f"RAP Bot Successfull data uploaded notification for {customer_type}", f"Data from {file_name} is Successfully Inserted into  Database", "Admin")
-                #                     logging.info(f"INFO :: Data from {file_name} is Successfully Inserted into spi_windmill_gen_daily_report Database")
-                #             except Exception as e:
-                #                 dataBaseError.append(e)
-                #                 logging.error(
-                #                     f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
-                #                 sending_mail(f"RAP Bot notification for error in Database insert",
-                #                              f"GENERATION DATA (general sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error is : {e}", "Admin")
-                #         elif 'break' in sheet_name.lower():
-                #             logging.info(f"INFO :: INSERT BREAKDOWN Data: {file_name}")
-                #             df = sheet_val[sheet_name].fillna("")
-                #             for y in df.columns:
-                #                 if 'gen' in y.lower() and 'date'in y.lower():
-                #                     df.rename(columns={y:'genDate'},inplace=True)
-                #                 if "customer" in y.lower() or 'company' in y.lower():
-                #                     df.rename(columns={y:'customerName'},inplace=True)
-                #                 if "state" in y.lower() or "site" in y.lower() or "section" in y.lower() or y.lower() == "mw":
-                #                     df.rename(columns={y:y.lower()},inplace=True)
-                #                 if 'loc' in y.lower():
-                #                     df.rename(columns={y:'locNo'},inplace=True)
-                #                 if 'breakdown' in y.lower() and 'remark' in y.lower():
-                #                     df.rename(columns={y:'breakDownRemark'},inplace=True)
-                #                 if 'formula' in y.lower() and 'parameter' in y.lower():
-                #                     df.rename(columns={y:'formulaParameter'},inplace=True)
-                #                 if 'breakdown' in y.lower() and 'hrs' in y.lower():
-                #                     df.rename(columns={y:'breakDownHr'},inplace=True)
-                #             try:
-                #                 for y_i,y in df.iterrows():
-                #                     if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) or re.match(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}',str(y.get('genDate'))):
-                #                         date_time_val = datetime.strptime(y.get('genDate'),'%d-%b-%Y').strftime('%Y-%m-%d') if re.match(r'\d{2}-[A-z]{3}-\d{4}',str(y.get('genDate'))) else str(y.get('genDate')).split(' ')[0]
-                #                         db_query = f"insert into suzlon_breakdown_data(genDate,customername,state,site,section,mw,locno,remarks,breakdownhrs,parameter) values('{date_time_val}','{y.get('customerName')}','{y.get('state')}','{y.get('site')}','{y.get('section')}',{y.get('mw')},'{y.get('locNo')}','{y.get('breakDownRemark')}',{y.get('breakDownHr')},'{y.get('formulaParameter')}')"
-                #                         # print(db_query)
-                #                         cursor.execute(db_query)
-                #                     # else:
-                #                     #     print(y)
-                #             except Exception as be:
-                #                 logging.error(f"ERROR :: Error occured while inserting {file_name} BREAK DOWN data : {be}")
-                #                 sending_mail(f"RAP Bot notification for error in Database insert",f"BREAKDOWN Data(break down sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error occured {e}", "Admin")
-
-                #     if duplicate_record_sd:
-                #         sending_mail(f"RAP Bot notification for duplicate records",
-                #                      f"Data from {file_name} file contains {str(duplicate_record_sd)} duplicate records", "Admin")
 
                 if "vestas_daily" in customer_type:
                     success_msg = []
@@ -787,6 +656,7 @@ def read_excel_file(browser, file_path, customer_type):
                     file_name = file_path.split('/')[-1]
                     logging.info(
                         "INFO :: -------- > Table used : vestas_xl_daily_hist and spi_windmill_gen_daily_report")
+
                     try:
                         for sheet in df_dic:
                             df = df_dic[sheet].fillna('')
@@ -864,9 +734,11 @@ def read_excel_file(browser, file_path, customer_type):
                                     x.iloc[1] = "gf"
                                 if 'feeder' in x.iloc[1].lower() and 'maintenance' in x.iloc[1].lower():
                                     x.iloc[1] = "fm"
-                                if x.iloc[1] == "Scheduled Maintenance":
+                                # if x.iloc[1] == "Scheduled Maintenance":
+                                if "Scheduled Maintenance" in x.iloc[1]:
                                     x.iloc[1] = 'sch'
-                                if x.iloc[1] == "Unscheduled Maintenance":
+                                # if x.iloc[1] == "Unscheduled Maintenance":
+                                if "Unscheduled Maintenance" in x.iloc[1]:
                                     x.iloc[1] = 'unsch'
                                 if x.iloc[1] == "Manual Stoppage":
                                     x.iloc[1] = 'ms'
@@ -880,22 +752,63 @@ def read_excel_file(browser, file_path, customer_type):
                                     x = column_val[1]
                                     if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x.get('genDate'))):
                                         # try:
+                                        genDate = str(x.get('genDate')).split(' ')[0]
                                         db_command1 = f'INSERT into vestas_xl_daily_hist(gendate,mw,customername,htno,site,locno,readingtakentime,cml_runhrs,cml_genhrs,cml_g0,cml_gen,cml_totalprod,cml_totalimport,cml_06_09am_1,cml_18_21pm_1,cml_21_22pm_1,cml_05_06amand09_18pm_1,cml_22_05am_1,cml_totalexport,cml_06_09am_2,cml_18_21pm_2,cml_21_22pm_2,cml_05_06amand09_18pm_2,cml_22_05am_2,cml_rkvahr_imp,cml_rkvahr_exp,daily_runhrs,daily_genhrs,daily_g0,daily_gen,daily_totalprod,daily_totalimport,daily_06_09am_1,daily_18_21pm_1,daily_21_22pm_1,daily_05_06amand09_18pm_1,daily_22_05am_1,daily_totalexport,daily_06_09am_2,daily_18_21pm_2,daily_21_22pm_2,daily_05_06amand09_18pm_2,daily_22_05am_2,daily_rkvahr_imp,daily_rkvahr_exp,gf,fm,sch,unsch,manualstoppage,readingnotavailable,total,remarks) values("{x.get("genDate")}","{x.get("mw")}","{x.get("companyName")}","{x.get("htno")}","{x.get("site")}","{x.get("locNo")}","{x.get("reading_taken_time")}",{check_float_val(x.get("cml_run_hr"))},{check_float_val(x.get("cml_gen_hr"))},{check_float_val(x.get("cml_g_0"))},{check_float_val(x.get("cml_gen"))},{check_float_val(x.get("cml_total_prod"))},{check_float_val(x.get("cml_total_import"))},{check_float_val(x.get("cml_06_09_am_1"))},{check_float_val(x.get("cml_18_21_pm_1"))},{check_float_val(x.get("cml_21_22_pm_1"))},{check_float_val(x.get("cml_05_06_am_&_09_18_pm_1"))},{check_float_val(x.get("cml_22_05_am_1"))},{check_float_val(x.get("cml_total_export"))},{check_float_val(x.get("cml_06_09_am_2"))},{check_float_val(x.get("cml_18_21_pm_2"))},{check_float_val(x.get("cml_21_22_pm_2"))},{check_float_val(x.get("cml_05_06_am_&_09_18_pm_2"))},{check_float_val(x.get("cml_22_05_am_2"))},{check_float_val(x.get("cml_rkvahr_imp"))},{check_float_val(x.get("cml_rkvahr_exp"))},{check_float_val(x.get("daily_run_hr"))},{check_float_val(x.get("daily_gen_hr"))},{check_float_val(x.get("daily_g_0"))},{check_float_val(x.get("daily_gen"))},{check_float_val(x.get("Prod"))},{check_float_val(x.get("daily_total_import"))},{check_float_val(x.get("daily_06_09_am_1"))},{check_float_val(x.get("daily_18_21_pm_1"))},{check_float_val(x.get("daily_21_22_pm_1"))},{check_float_val(x.get("daily_05_06_am_&_09_18_pm_1"))},{check_float_val(x.get("daily_22_05_am_1"))},{check_float_val(x.get("daily_total_export"))},{check_float_val(x.get("daily_06_09_am_2"))},{check_float_val(x.get("daily_18_21_pm_2"))},{check_float_val(x.get("daily_21_22_pm_2"))},{check_float_val(x.get("daily_05_06_am_&_09_18_pm_2"))},{check_float_val(x.get("daily_22_05_am_2"))},{check_float_val(x.get("daily_rkvahr_imp"))},{check_float_val(x.get("daily_rkvahr_exp"))},{check_float_val(x.get("gf"))},{check_float_val(x.get("fm"))},{check_float_val(x.get("sch"))},{check_float_val(x.get("unsch"))},{check_float_val(x.get("ms"))},{check_float_val(x.get("readNotAvail"))},{check_float_val(x.get("total"))},"{x.get("remarks")}");'
+                                        
                                         ebkwhValue = abs(float(check_float_val(x.get(
                                             "daily_total_export")))) - abs(float(check_float_val(x.get("daily_total_import"))))
+                                        
                                         customerName = "SPI Power" if "spi" in x[2].lower() or "skr" in x[2].lower(
                                         ) else "KR Wind Energy" if "kr" in x[2].lower() else ''
-                                        location_values = location.get(
-                                            x.get('locNo'))
+                                        
+                                        location_values = location.get(x.get('locNo'))
+                                        
                                         db_command2 = f"INSERT into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,ebkwhday,mw,section,site,make,htno) values('{str(x.get('genDate')).split(' ')[0]}','{customerName}','{x.get('locNo')}',{float(check_float_val(x.get('Prod')))},{check_float_val(x.get('gf'))},{check_float_val(x.get('fm'))},{float(check_float_val(x.get('sch')))},{float(check_float_val(x.get('unsch')))},{float(check_float_val(x.get('daily_gen_hr')))},{float(check_float_val(x.get('daily_run_hr')))},{ebkwhValue},{float(check_float_val(x.get('mw')))},'{location_values[1]}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
-                                        vestas_daily = check_valuein_reporting_layer(
-                                            cursor, [str(x.get('genDate')).split(' ')[0], customerName, x.get('locNo')])
+                                        
+                                        vestas_daily = check_valuein_reporting_layer(cursor, [genDate, customerName, x.get('locNo')])
                                         # print(vestas_daily)
+                                        
+                                        update_command = f"update spi_windmill_gen_daily_report set\
+                                        mckwhday={float(check_float_val(x.get('Prod')))},\
+                                        gf={float(check_float_val(x.get('gf')))},\
+                                        fm={float(check_float_val(x.get('fm')))},\
+                                        sch={float(check_float_val(x.get('sch')))},\
+                                        unsch={float(check_float_val(x.get('unsch')))},\
+                                        genhrs={float(check_float_val(x.get('daily_gen_hr')))},\
+                                        oprhrs={float(check_float_val(x.get('daily_run_hr')))},\
+                                        ebkwhday={ebkwhValue},\
+                                        mw={float(check_float_val(x.get('mw')))}\
+                                        where gendate='{str(x.get('genDate')).split(' ')[0]}' and companyname='{customerName}' and locno='{x.get('locNo')}';"
+                                        update_command = re.sub(r'\s+',' ',update_command)
+                                        
+                                        sel_query = f"SELECT mckwhday,ebkwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw FROM spi_windmill_gen_daily_report where gendate='{genDate}' and companyname='{customerName}' and locno='{x.get('locNo')}';"
+
                                         if vestas_daily:
                                             if any([x.get('cml_run_hr'), x.get('cml_gen_hr'), x.get('cml_g_0'), x.get('cml_gen'), x.get("cml_total_prod")]):
                                                 cursor.execute(db_command1)
                                                 cursor.execute(db_command2)
                                                 file_data.append({'gendate':str(x.get('genDate')).split(' ')[0],'mckwhday':float(check_float_val(x.get('Prod'))),'make':location_values[0]})
+                                        else:
+                                            if any([x.get('cml_run_hr'), x.get('cml_gen_hr'), x.get('cml_g_0'), x.get('cml_gen'), x.get("cml_total_prod")]):
+                                                cursor.execute(sel_query)
+
+                                                db_val = cursor.fetchall()[0]
+
+                                                compare_val = (float(check_float_val(x.get('Prod'))),float(format(ebkwhValue,'.6')),float(check_float_val(x.get('gf'))),float(check_float_val(x.get('fm'))),float(check_float_val(x.get('sch'))),float(check_float_val(x.get('unsch'))),float(check_float_val(x.get('daily_gen_hr'))),float(check_float_val(x.get('daily_run_hr'))),float(check_float_val(x.get('mw'))))
+
+                                                falgs = [x==y for x,y in zip(compare_val,db_val)]
+
+                                                insert_flag = all(falgs)
+                                                if not insert_flag:
+                                                    print(f'Date : {genDate}\nCustomer : {customerName}\nLocno : {x.get("locNo")}\nEbkwhval : {ebkwhValue}')
+                                                    # print(ebkwhValue == db_val[1])
+                                                    print(falgs)
+                                                    print(compare_val)
+                                                    print(db_val)
+                                                    logging.info(f'Query : {update_command}')
+                                                    cursor.execute(update_command)
+                                                    cursor.execute(db_command1)
+                                                # cursor.execute(update_command)
                                         # except Exception as dbe:
                                         #     logging.error(f"Error occured in row data insertion {dbe}")
                                 logging.info(
@@ -998,16 +911,27 @@ def read_excel_file(browser, file_path, customer_type):
                                 if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(data.get('genDate'))):
                                     db_command1 = f"INSERT INTO suzlon_xl_weekly_hist(gendate,mw,customername,htno,locno,reading_totalimport,reading_06_09am_1,reading_06_09pm_1,reading_09_10pm_1,reading_05_06amand09_06pm_1,reading_10pm_05am_1,reading_totalexport,reading_06_09am_2,reading_06_09pm_2,reading_09_10pm_2,reading_05_06amand09_06pm_2,reading_10pm_05am_2,reading_kvarhimportlag,reading_kvarhimportlead,reading_kvarhexportlag,reading_kvarhexportlead,reading_kvahimportreading,reading_kvahexportreading,reading_powerfactor,reading_percent_kvahimport,reading_monthcumulative,calc_totalimport,calc_06_09am_1,calc_06_09pm_1,calc_09_10pm_1,calc_05_06amand09_06pm_1,calc_10pm_05am_1,calc_totalexport,calc_06_09am_2,calc_06_09pm_2,calc_09_10pm_2,calc_05_06amand09_06pm_2,calc_10pm_05am_2,calc_kvarhimportlag,calc_kvarhimportlead,calc_kvarhexportlag,calc_kvarhexportlead,calc_kvahimportreading,calc_kvahexportreading,calc_powerfactor,calc_percent_kvahimport,calc_monthcumulative) values('{str(data.get('genDate')).split(' ')[0]}',{float(check_float_val(data.get('mw')))},'{str(data.get('companyName'))}','{str(data.get('htno'))}','{str(data.get('locno'))}',{float(check_float_val(data.get('read_total_import')))},{float(check_float_val(data.get('read_6am_to_9am_1')))},{float(check_float_val(data.get('read_6pm_to_9pm_1')))},{float(check_float_val(data.get('read_9pm_to_10pm_1')))},{float(check_float_val(data.get('read_5am_to_6am_and_9am_to_6pm_1')))},{float(check_float_val(data.get('read_10pm_to_5am_1')))},{float(check_float_val(data.get('read_total_export')))},{float(check_float_val(data.get('read_6am_to_9am_2')))},{float(check_float_val(data.get('read_6pm_to_9pm_2')))},{float(check_float_val(data.get('read_9pm_to_10pm_2')))},{float(check_float_val(data.get('read_5am_to_6am_and_9am_to_6pm_2')))},{float(check_float_val(data.get('read_10pm_to_5am_2')))},{float(check_float_val(data.get('read_kvarh_import_lag')))},{float(check_float_val(data.get('read_kvarh_import_lead')))},{float(check_float_val(data.get('read_kvarh_export_lag')))},{float(check_float_val(data.get('read_kvarh_export_lead')))},{float(check_float_val(data.get('read_kvah_import_reading')))},{float(check_float_val(data.get('read_kvah_export_reading')))},{float(check_float_val(data.get('read_power_factor')))},{float(check_float_val(data.get('read_percent_kvarh_import')))},{float(check_float_val(data.get('read_month_cml')))},{float(check_float_val(data.get('calc_total_import')))},{float(check_float_val(data.get('calc_6am_to_9am_1')))},{float(check_float_val(data.get('calc_6pm_to_9pm_1')))},{float(check_float_val(data.get('calc_9pm_to_10pm_1')))},{float(check_float_val(data.get('calc_5am_to_6am_and_9am_to_6pm_1')))},{float(check_float_val(data.get('calc_10pm_to_5am_1')))},{float(check_float_val(data.get('calc_total_export')))},{float(check_float_val(data.get('calc_6am_to_9am_2')))},{float(check_float_val(data.get('calc_6pm_to_9pm_2')))},{float(check_float_val(data.get('calc_9pm_to_10pm_2')))},{float(check_float_val(data.get('calc_5am_to_6am_and_9am_to_6pm_2')))},{float(check_float_val(data.get('calc_10pm_to_5am_2')))},{float(check_float_val(data.get('calc_kvarh_import_lag')))},{float(check_float_val(data.get('calc_kvarh_import_lead')))},{float(check_float_val(data.get('calc_kvarh_export_lag')))},{float(check_float_val(data.get('calc_kvarh_export_lead')))},{float(check_float_val(data.get('calc_kvah_import_reading')))},{float(check_float_val(data.get('calc_kvah_export_reading')))},{float(check_float_val(data.get('calc_power_factor')))},{float(check_float_val(data.get('calc_percent_kvarh_import')))},{float(check_float_val(data.get('calc_month_cml')))});"
                                     
-                                    if any([str(data.get('companyName')).replace('NaT', ''), str(data.get('htno')).replace('NaT', ''), str(data.get('locno')).replace('NaT', '')]):
-                                        customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', data.get('companyName')).lower() or "skr" in re.sub(r"\s+", '', data.get(
-                                            'companyName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', data.get('companyName')).lower() else ''
-                                        locNoVal = re.sub(
-                                            r"\s+", '', data.get('locno')) if "TP06" not in data.get('locno') else "TP6"
-                                        ebkwhday = abs(float(check_float_val(data.get('calc_total_export')))) - abs(
-                                            float(check_float_val(data.get('calc_total_import'))))
+                                    if any([str(data.get('companyName')).replace('NaT',''),data.get('read_total_import'),data.get('read_total_export')]):
+                                        customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', data.get('companyName')).lower() or "skr" in re.sub(r"\s+", '', data.get('companyName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', data.get('companyName')).lower() else ''
+                                        
+                                        locNoVal = re.sub(r"\s+", '', data.get('locno')) if "TP06" not in data.get('locno') else "TP6"
+                                        
+                                        ebkwhday = abs(float(check_float_val(data.get('calc_total_export')))) - abs(float(check_float_val(data.get('calc_total_import'))))
+
                                         db_command2 = f"update spi_windmill_gen_daily_report set ebkwhday={float(check_float_val(ebkwhday))} where gendate='{str(data.get('genDate')).split(' ')[0]}' and locno='{locNoVal}' and companyname='{customerName}';"
-                                        cursor.execute(db_command1)
-                                        cursor.execute(db_command2)
+
+                                        genDate = str(data.get('genDate')).split(' ')[0]
+                                        search_factor = [genDate,customerName,locNoVal]
+                                        if not check_valuein_reporting_layer(cursor,search_factor):
+                                            eb_val = return_ebkwh_value(cursor,search_factor)
+                                            if eb_val!=None:
+                                                if round(ebkwhday,1)!=eb_val:
+                                                    cursor.execute(db_command1)
+                                                    cursor.execute(db_command2)
+                                            else:
+                                                cursor.execute(db_command1)
+                                                cursor.execute(db_command2)
+
                                         file_data.append({'gendate':str(data.get('genDate')).split(' ')[0],'ebkwhday':float(check_float_val(ebkwhday)),'make':'suzlon_weekly','locNoVal':locNoVal,'customerName':customerName,"FileName":file_name})
 
                             print("\n\nSuccessfully Inserted in suzlon weekly\n\n")
@@ -1025,6 +949,7 @@ def read_excel_file(browser, file_path, customer_type):
                             sending_mail(f"RAP Bot notification for error in Database insert",
                                          f"Data from {sheetName} sheet data from {file_name} with {customer_type} type is not Inserted into  Database Error occured {dbe}", "Admin")
                     sending_mail("RAP Bot Databases Successfull insertion",f"Bot has successfully inserted {customer_type} the data into the database and the locations are {', '.join(location_name)}","Admin")
+
             except Exception as e:
                 dataBaseError.append(e)
                 print("Error is : ", e)
@@ -1097,14 +1022,18 @@ while(bot_run):
         logging.info(
             'INFO :: Bot run time ---> {} and Current time ---> {}'.format(bot_time, current_time))
         file_data = []
-        crms_data_load.start(browser,config,download_file_path)
+        if config['Exception']['suzlon_daily']=="ON":
+            print('CRMS exception run')
+            crms_data_load.start(browser,config,download_file_path,True)
+        else:
+            crms_data_load.start(browser,config,download_file_path)
         start_program(browser)
         print(bot_time)
         browser.quit()
-        if dataBaseError:
-            sending_mail("RAP Bot Partialy Completed","Some issue occured RAP Bot have partially inserted the data RAP Admin would look after the issue",'Bussiness')
-        else:
-            sending_mail("RAP Bot Successfully Completed","RAP Bot have inserted all the data Into the Database",'Bussiness')
+        # if dataBaseError:
+        #     sending_mail("RAP Bot Partialy Completed","Some issue occured RAP Bot have partially inserted the data RAP Admin would look after the issue",'Bussiness')
+        # else:
+        #     sending_mail("RAP Bot Successfully Completed","RAP Bot have inserted all the data Into the Database",'Bussiness')
 
         sending_mail("RAP Bot Completed","RAP Bot Completed","ADMIN")
 

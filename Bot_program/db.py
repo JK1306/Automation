@@ -94,6 +94,7 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
 
                     genDate = str(x.get('genDate')).split(' ')[0] if re.match(r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}", str(x[0])) else datetime.strptime(x.get('genDate'), "%d-%b-%Y").strftime("%Y-%m-%d")
                     print(x.get('customerName'))
+                    
                     customerName = "SPI Power" if "spi" in re.sub(r"\s+", '', x.get('customerName')).lower() or "skr" in re.sub(r"\s+", '', x.get('customerName')).lower() else "KR Wind Energy" if "kr" in re.sub(r"\s+", '', x.get('customerName')).lower() else ''
                     print(customerName)
 
@@ -101,8 +102,10 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
                     
                     location_values = location.get(locNoVal)
 
-                    if not check_valuein_reporting_layer(cursor,[genDate,customerName,x.get('locNo')]):
-                        db_command = f"update spi_windmill_gen_daily_report set\
+                    db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
+                    
+                    if not check_valuein_reporting_layer(cursor,[genDate,customerName,locNoVal]):
+                        db_command1 = f"update spi_windmill_gen_daily_report set\
                         mckwhday={float(check_float_val(x.get('genkwhDay')))},\
                         gf={float(check_float_val(x.get('gf')))},\
                         fm={float(check_float_val(x.get('fm')))},\
@@ -111,11 +114,11 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
                         genhrs={float(check_float_val(x.get('genHrs')))},\
                         oprhrs={float(check_float_val(x.get('oprHrs')))},\
                         mw={float(check_float_val(x.get('mw')))}\
-                        where gendate='{genDate}' and companyname='{customerName}' and locno='{x.get('locNo')}';"
-                        logging.info(f'Execute command : {db_command}')
-                        cursor.execute(db_command)
+                        where gendate='{genDate}' and companyname='{customerName}' and locno='{locNoVal}';"
+                        logging.info(f'Execute command : {db_command1}')
+                        
 
-                        query = f"SELECT mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw FROM spi_windmill_gen_daily_report where gendate='{genDate}' and companyname='{customerName}' and locno='{x.get('locNo')}';"
+                        query = f"SELECT mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw FROM spi_windmill_gen_daily_report where gendate='{genDate}' and companyname='{customerName}' and locno='{locNoVal}';"
                         
                         xml_val = (float(check_float_val(x.get('genkwhDay'))),float(check_float_val(x.get('gf'))),float(check_float_val(x.get('fm'))),float(check_float_val(x.get('s'))),float(check_float_val(x.get('u'))),float(check_float_val(x.get('genHrs'))),float(check_float_val(x.get('oprHrs'))),float(check_float_val(x.get('mw'))))
                         
@@ -124,12 +127,11 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
                         db_val = cursor.fetchall()[0]
                         insert_flag = all([x==y for x,y in zip(xml_val,db_val)])
                         if not insert_flag:
-                            db_command2 = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
-                            cursor.execute(db_command2)
+                            cursor.execute(db_command)
+                            cursor.execute(db_command1)
                     else:
-                        db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
-                        logging.info(f'Execute command : {db_command}')
                         db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
+                        logging.info(f'Execute command : {db_command}')
                         logging.info(f'Execute command : {db_command2}')
                         cursor.execute(db_command)
                         cursor.execute(db_command2)
