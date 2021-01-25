@@ -105,6 +105,7 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
                     db_command = f"insert into suzlon_xl_daily_hist(gendate,customername,state,site,section,mw,locno,genkwhday,genkwhmtd,genkwhytd,plfday,plfmtd,plfytd,mcavail,gf,fm,s,u,nor,genhrs,oprhrs) values('{genDate}','{x.get('customerName')}','{x.get('state')}','{x.get('site')}','{x.get('section')}',{float(check_float_val(x.get('mw')))},'{x.get('locNo')}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('genkwhMtd')))},{float(check_float_val(x.get('genkwhYtd')))},{float(check_float_val(x.get('plfDay')))},{float(check_float_val(x.get('plfMtd')))},{float(check_float_val(x.get('plfYtd')))},{float(check_float_val(x.get('mcAvail')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('nor',x.get('rna'))))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))});"
                     
                     if not check_valuein_reporting_layer(cursor,[genDate,customerName,locNoVal]):
+                        logging.info('Value present in reporting layer')
                         db_command1 = f"update spi_windmill_gen_daily_report set\
                         mckwhday={float(check_float_val(x.get('genkwhDay')))},\
                         gf={float(check_float_val(x.get('gf')))},\
@@ -115,8 +116,6 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
                         oprhrs={float(check_float_val(x.get('oprHrs')))},\
                         mw={float(check_float_val(x.get('mw')))}\
                         where gendate='{genDate}' and companyname='{customerName}' and locno='{locNoVal}';"
-                        logging.info(f'Execute command : {db_command1}')
-                        
 
                         query = f"SELECT mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw FROM spi_windmill_gen_daily_report where gendate='{genDate}' and companyname='{customerName}' and locno='{locNoVal}';"
                         
@@ -125,9 +124,15 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
                         cursor.execute(query)
                         
                         db_val = cursor.fetchall()[0]
+                        logging.info(f'XML value : {str(xml_val)}')
+                        logging.info(f'DB value : {str(db_val)}')
+                        compare_val = [x==y for x,y in zip(xml_val,db_val)]
                         insert_flag = all([x==y for x,y in zip(xml_val,db_val)])
+                        logging.info(f'Falg detail : {str(compare_val)}')
                         if not insert_flag:
+                            logging.info(f'Query : {db_command}')
                             cursor.execute(db_command)
+                            logging.info(f'Query : {db_command1}')
                             cursor.execute(db_command1)
                     else:
                         db_command2 = f"insert into spi_windmill_gen_daily_report(gendate,companyname,locno,mckwhday,gf,fm,sch,unsch,genhrs,oprhrs,mw,section,site,make,htno) values('{genDate}','{customerName}','{locNoVal}',{float(check_float_val(x.get('genkwhDay')))},{float(check_float_val(x.get('gf')))},{float(check_float_val(x.get('fm')))},{float(check_float_val(x.get('s')))},{float(check_float_val(x.get('u')))},{float(check_float_val(x.get('genHrs')))},{float(check_float_val(x.get('oprHrs')))},{float(check_float_val(x.get('mw')))},'{x.get('section')}','{x.get('site')}','{location_values[0]}','{location_values[3]}');"
@@ -136,9 +141,9 @@ def insert_into_db(config,data_type,doc_val,file_name,customer_type):
                         cursor.execute(db_command)
                         cursor.execute(db_command2)
             except Exception as e:
-                traceback.print_exc()
-                logging.error(f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {e}")
-                send_mail(config,f"RAP Bot notification for error in Database insert",f"GENERATION DATA (general sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error is : {e}", 0)
+                err_msg = traceback.format_exc()
+                logging.error(f"ERROR :: An error occured while inserting GENERAL data from {file_name} into suzlon_xl_daily_hist and spi_windmill_gen_daily_report Database ----------------------> {err_msg}")
+                send_mail(config,f"RAP Bot notification for error in Database insert",f"GENERATION DATA (general sheet) from {file_name} or {customer_type} type is not Inserted into  Database Error is : \n{err_msg}", 0)
         print("\n\nSuccessfully Inserted in suzlon daily\n\n")
         logging.info(f"INFO :: Data from {file_name} is Successfully Inserted into suzlon_xl_daily_hist Database")
         if recordInserted:
@@ -165,9 +170,8 @@ def convert_xml_to_df(file_path,config):
                 data_df = data_df.append(sheet_as_list)
     data_df.columns = data_df.iloc[0]
     data_df.drop(0,inplace=True)
-    # print('------------------------')
-    print(data_df)
-    read_data(config,file_path,data_df)
+    #   read_data(config,file_path,data_df)
+    return data_df
 
 def read_data(config,file_path,doc_val):
     file_name = file_path.split('/')[-1]
@@ -217,8 +221,7 @@ def read_data(config,file_path,doc_val):
                 doc_val.rename(
                     columns={y: 'oprHrs'}, inplace=True)
 
-    insert_into_db(config,'generation',doc_val,file_name,'suzlon_daily')
-    # test_db(config,doc_val)
+    return doc_val
 
 def test_db(config,doc_val):
     # query='SELECT * FROM spi_windmill_gen_daily_report;'
@@ -240,10 +243,6 @@ def test_db(config,doc_val):
                 print('Perform Insert')
                 print(xml_val)
                 print(db_val)
-            # if not (xml_val==db_val):
-            #     print(xml_val)
-            #     print('\n')
-            #     print(db_val)
     cursor.close()
 
 if __name__ == "__main__":
@@ -251,4 +250,4 @@ if __name__ == "__main__":
     config.read(os.path.join(os.path.dirname(__file__),'Config','config.ini'))
     path=r'C:\Users\Jaikishore\Documents\RAP\SPI Group\Data_load_2\Download\DailyGenerationReport_637455303429672865.xls'
     convert_xml_to_df(path,config)
-    # test_db(config)
+    

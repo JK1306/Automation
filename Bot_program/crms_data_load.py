@@ -83,11 +83,24 @@ def move_file(file_name,source_path,dest_path):
     shutil.move(source_path,dest_path)
     return os.path.join(dest_path,file_name)
 
+def check_data_recived_uptodate(data_df):
+    last_date = data_df.iloc[-1]['genDate']
+    last_date = datetime.strptime(last_date,'%d-%b-%Y').date()
+    yesterday = datetime.now().date() - timedelta(days=1)
+    location_list = None
+    data_dict = dict()
+    if last_date < yesterday:
+        location_list = data_df['locNo'].drop_duplicates().to_list()
+        for x in location_list:
+            data_dict[x]=last_date.strftime('%d-%b-%Y')
+    return data_dict
+
 def dashboard(browser,config,download_file_path,exception_flag):
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ContentBlock"]/h2')))
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="ContentPlaceHolder1_DDLCustomer"]'))).click()
     customer_list = browser.find_elements_by_xpath('//*[@id="ContentPlaceHolder1_DDLCustomer"]/option')
     customer_list = [x.text for x in customer_list]
+    incomplete_location=[]
     for x in range(len(customer_list)):
         if 'select' not in customer_list[x].lower():
             print(customer_list[x])
@@ -135,8 +148,24 @@ def dashboard(browser,config,download_file_path,exception_flag):
                         os.makedirs(move_dir,exist_ok=True)
                         file_path = os.path.join(download_file_path,downloaded_file)
                         file_path = move_file(downloaded_file,file_path,move_dir)
-                        db.convert_xml_to_df(file_path,config)            
-            
+                        data_df = db.convert_xml_to_df(file_path,config)
+                        data_df = db.read_data(config,file_path,data_df)
+                        file_name = file_path.split('/')[-1]
+                        db.insert_into_db(config,'generation',data_df,file_name,'suzlon_daily')
+                        loc_data = check_data_recived_uptodate(data_df)
+                        if loc_data:
+                            incomplete_location.append(loc_data)
+    if incomplete_location:
+        subject = 'RAPBot have noticed that defect in Suzlon Daily locations'
+        body = 'Hi,\n\t RAPBot have noted that for following locations data is not Up-to-date\n\t'
+        summary = ''
+        for x in incomplete_location:
+            for y in x:
+                text = f'* Location No : {y} Date : {x[y]}\n\t'
+                summary+=text
+        body +=summary
+        db.send_mail(config,subject,body,1)
+
 def login(browser,config,download_file_path,exception_flag):
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="txtUserId"]'))).send_keys(config['Bot']['login_id'])
     WebDriverWait(browser,45).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="txtPassword"]'))).send_keys(config['Bot']['paswd'])
@@ -167,7 +196,6 @@ def start(browser,config,download_file_path,exception_flag=None):
                             format='%(asctime)s %(message)s',
                             filemode='a',
                             level = logging.DEBUG)
-        logging.debug('Started to process ftp confirm')
         browser.get(config['Bot']['url'])
         logging.debug('URL get launched in browser')
         login(browser,config,download_file_path,exception_flag)
